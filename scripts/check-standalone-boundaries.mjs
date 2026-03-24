@@ -7,15 +7,44 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const packageRoot = path.resolve(__dirname, '..')
 const srcRoot = path.join(packageRoot, 'src')
+const scriptsRoot = path.join(packageRoot, 'scripts')
 
 const codeExtensions = new Set(['.ts', '.tsx', '.mts', '.cts', '.js', '.mjs', '.cjs'])
+const toolingFiles = [
+  path.join(packageRoot, 'package.json'),
+  path.join(packageRoot, '.npmrc'),
+  path.join(packageRoot, 'tsconfig.json'),
+  path.join(packageRoot, 'tsconfig.build.json'),
+  path.join(packageRoot, 'vitest.config.ts'),
+  path.join(packageRoot, '.oxlintrc.json'),
+  path.join(packageRoot, '.oxfmtrc.json'),
+  path.join(packageRoot, '.github', 'workflows', 'ci.yml'),
+]
 
 const forbiddenPackageSpecifiers = [
   /^@project\//,
-  /^@chromvoid\//,
+  /^@chromvoid\/(?!headless-ui(?:\/|$))/,
   /^apps\//,
   /^packages\//,
   /^root\//,
+]
+
+const forbiddenToolingPatterns = [
+  {pattern: /\.\.\/\.\.\//u, reason: 'tooling file references a path above the package root'},
+  {
+    pattern: /path\.(?:resolve|join)\([^)]*['"]\.\.['"]\s*,\s*['"]\.\.['"]/u,
+    reason: 'tooling file resolves above the package root',
+  },
+  {pattern: /\bnpm run [^\n\r"]* -w /u, reason: 'workspace command is not allowed'},
+  {pattern: /\bworkspace:\*/u, reason: 'workspace dependency is not allowed'},
+  {pattern: /\bnpx\s+prettier\b/u, reason: 'prettier CLI is not allowed'},
+  {pattern: /\bprettier\s+--/u, reason: 'prettier CLI is not allowed'},
+  {pattern: /\bsetup-bun\b/u, reason: 'bun dependency is not allowed'},
+  {pattern: /\bbun\s+(?:build|run|test|install|x)\b/u, reason: 'bun dependency is not allowed'},
+  {pattern: /\.\.\/\.\.\/\.oxlintrc\.json/u, reason: 'tooling file references a root oxlint config'},
+  {pattern: /\.\.\/\.\.\/\.prettierrc/u, reason: 'tooling file references a root prettier config'},
+  {pattern: /packages\/(?!headless\b)/u, reason: 'tooling file references a monorepo package path'},
+  {pattern: /apps\//u, reason: 'tooling file references a monorepo app path'},
 ]
 
 const importLikeRegex =
@@ -28,6 +57,10 @@ const isInsidePackage = (targetPath) => {
 }
 
 const walkFiles = async (dirPath) => {
+  if (!existsSync(dirPath)) {
+    return []
+  }
+
   const entries = await readdir(dirPath, {withFileTypes: true})
   const files = []
 
@@ -54,6 +87,7 @@ if (!existsSync(srcRoot)) {
 }
 
 const files = await walkFiles(srcRoot)
+const scriptFiles = await walkFiles(scriptsRoot)
 const violations = []
 
 for (const filePath of files) {
@@ -95,6 +129,22 @@ for (const filePath of files) {
         reason: 'relative import escapes package boundary',
       })
     }
+  }
+}
+
+for (const filePath of [...toolingFiles, ...scriptFiles]) {
+  if (!existsSync(filePath)) continue
+
+  const content = await readFile(filePath, 'utf8')
+
+  for (const {pattern, reason} of forbiddenToolingPatterns) {
+    if (!pattern.test(content)) continue
+
+    violations.push({
+      filePath,
+      specifier: pattern.source,
+      reason,
+    })
   }
 }
 

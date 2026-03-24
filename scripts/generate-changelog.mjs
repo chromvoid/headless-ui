@@ -176,7 +176,6 @@ const mvpTranche = Object.entries(mvpNextByIssue)
   .sort((left, right) => issueNumber(left.id) - issueNumber(right.id))
 
 const lines = []
-lines.push('<!-- prettier-ignore-start -->')
 lines.push('# Changelog (Generated)')
 lines.push('')
 lines.push(`Date: ${releaseDate}`)
@@ -233,8 +232,6 @@ lines.push('')
 lines.push('<!-- manual-overrides:start -->')
 lines.push('- none')
 lines.push('<!-- manual-overrides:end -->')
-lines.push('')
-lines.push('<!-- prettier-ignore-end -->')
 
 await mkdir(path.dirname(outPath), {recursive: true})
 await writeFile(outPath, `${lines.join('\n')}`, 'utf8')

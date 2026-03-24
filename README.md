@@ -3,6 +3,26 @@ built on Reatom v1000 and WAI-ARIA APG behavior contracts.
 
 The visual UI kit is intentionally out of scope for this package.
 
+## Import contract
+
+The package ships from `dist/` and supports both a convenience root barrel and lean leaf imports.
+
+Use the root barrel when convenience matters more than bundle shape:
+
+```ts
+import {createButton, createTabs} from '@chromvoid/headless-ui'
+```
+
+Use leaf subpaths in perf-sensitive code when you want an intentionally narrow dependency graph:
+
+```ts
+import {createButton} from '@chromvoid/headless-ui/button'
+import {CompositeNavigationOrientation} from '@chromvoid/headless-ui/interactions/composite-navigation'
+import {toggleSelection} from '@chromvoid/headless-ui/core/selection'
+```
+
+The root barrel remains supported, but subpaths are the stable lean-import contract for applications and higher-level packages such as `@chromvoid/uikit`.
+
 Architecture decisions and delivery artifacts:
 
 - `./specs/ADR-001-headless-architecture.md`
@@ -10,6 +30,18 @@ Architecture decisions and delivery artifacts:
 - `./specs/ISSUE-BACKLOG.md`
 - `./specs/RELEASE-CANDIDATE.md`
 - `./specs/release/mvp-changelog.md`
+
+## Package-local workflow
+
+Run all package checks from the package root:
+
+```sh
+npm ci
+npm run lint
+npm run test
+npm run build
+npm pack --dry-run
+```
 
 ## Implemented components
 

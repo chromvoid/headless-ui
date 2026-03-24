@@ -1,5 +1,38 @@
 {
-  "extends": "../../tsconfig.json",
-  "include": ["src/**/*"],
-  "exclude": ["node_modules/*"]
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ES2022",
+      "ScriptHost",
+      "WebWorker",
+      "ES2015.Collection",
+      "ES2015.Promise"
+    ],
+    "removeComments": true,
+    "importHelpers": false,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "verbatimModuleSyntax": true
+  },
+  "include": ["src/**/*", "vitest.config.ts"],
+  "exclude": ["dist", "node_modules"]
 }

@@ -1,6 +1,6 @@
+import {spawnSync} from 'node:child_process'
 import {existsSync, readFileSync} from 'node:fs'
 import path from 'node:path'
-import {spawnSync} from 'node:child_process'
 import {fileURLToPath} from 'node:url'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -94,16 +94,16 @@ if (semverClass === 'major') {
   try {
     const changedFiles = getChangedFiles(pullRequest.base.sha, pullRequest.head.sha)
     const hasMigrationNotesUpdate = changedFiles.some(
-      (filePath) =>
-        filePath === 'specs/release/migration-notes-pre-v1.md' ||
-        filePath === 'packages/headless/specs/release/migration-notes-pre-v1.md',
+      (filePath) => filePath === 'specs/release/migration-notes-pre-v1.md',
     )
 
     if (!hasMigrationNotesUpdate) {
       errors.push('major release must include changes in specs/release/migration-notes-pre-v1.md.')
     }
   } catch (error) {
-    errors.push(`unable to validate changed files for migration notes: ${error instanceof Error ? error.message : String(error)}`)
+    errors.push(
+      `unable to validate changed files for migration notes: ${error instanceof Error ? error.message : String(error)}`,
+    )
   }
 }
 
