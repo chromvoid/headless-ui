@@ -147,7 +147,7 @@ When this contract changes in a breaking way, the change MUST be documented in t
 
 ### Parity matrix (Headless vs UIKit)
 
-This matrix is intentionally short and exists to prevent drift between `packages/headless/specs/components/checkbox.md` and `packages/uikit/specs/components/checkbox.md`.
+This matrix is intentionally short and exists to prevent drift between `packages/headless-ui/specs/components/checkbox.md` and `packages/uikit/specs/components/checkbox.md`.
 
 | Surface                      | Headless                                   | UIKit                                    |
 | ---------------------------- | ------------------------------------------ | ---------------------------------------- |

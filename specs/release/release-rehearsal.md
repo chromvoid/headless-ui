@@ -15,7 +15,7 @@ It defines a deterministic dry-run sequence for shard release preparation and re
 
 ## Deterministic Command Sequence
 
-Run in `packages/headless`:
+Run in `packages/headless-ui`:
 
 1. `npm run lint`
 2. `npm run test`

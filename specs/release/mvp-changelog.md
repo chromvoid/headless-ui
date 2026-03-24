@@ -26,8 +26,8 @@ Data and composite widgets (latest tranche):
 
 Full implemented surface at this point (30 patterns) is reflected in:
 
-- `packages/headless/src/index.ts`
-- `packages/headless/README.md`
+- `packages/headless-ui/src/index.ts`
+- `packages/headless-ui/README.md`
 
 ## Testing and APG Hardening
 

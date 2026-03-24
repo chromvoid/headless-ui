@@ -6,7 +6,7 @@
 > **Authors**: Team ChromVoid
 > **Related Documents**:
 >
-> - [packages/headless/README.md](../README.md) - package goal
+> - [packages/headless-ui/README.md](../README.md) - package goal
 > - [WAI-ARIA APG patterns](https://www.w3.org/WAI/ARIA/apg/patterns/) - accessibility behavior patterns
 > - [WAI-ARIA APG keyboard interface](https://www.w3.org/WAI/ARIA/apg/practices/keyboard-interface/) - keyboard and focus rules
 > - [Reatom docs](https://www.reatom.dev/) - state management model
@@ -14,7 +14,7 @@
 > - [ADR-003-public-api-versioning](./ADR-003-public-api-versioning.md) - SemVer and deprecation policy
 > - [ADR-004-focus-selection-policy](./ADR-004-focus-selection-policy.md) - shared focus/selection policy
 >
-> **Note**: `packages/headless` in this monorepo is a development mirror.
+> **Note**: `packages/headless-ui` in this monorepo is a development mirror.
 > The canonical source, versioning, and publishing flow live in a separate public git-shard repository.
 
 ## Context
@@ -56,7 +56,7 @@ If this package is treated as a regular internal monorepo module, we get:
 
 ### 1. Repository Model and Ownership
 
-1. `packages/headless` in this monorepo is a development mirror.
+1. `packages/headless-ui` in this monorepo is a development mirror.
 2. Canonical code history, tags, and releases are managed in a separate public git-shard repository.
 3. Publishing to package registries is done only from git-shard.
 

@@ -4,7 +4,7 @@
 
 This document defines the operational sync flow between:
 
-- monorepo mirror: `packages/headless`
+- monorepo mirror: `packages/headless-ui`
 - canonical public repository: git-shard
 
 It implements `HLS-001` and supports ADR-001/ADR-002.
@@ -22,7 +22,7 @@ Use this when changes were developed inside monorepo and must be promoted to can
 
 ### Preconditions
 
-1. changes are limited to `packages/headless/**`
+1. changes are limited to `packages/headless-ui/**`
 2. local checks pass:
    - `npm run lint`
    - `npm run test`
@@ -58,7 +58,7 @@ Use this after shard releases or direct shard-first development.
 
 1. create monorepo branch:
    - naming: `sync/shard-YYYYMMDD-<tag-or-topic>`
-2. copy/sync shard files into `packages/headless`
+2. copy/sync shard files into `packages/headless-ui`
 3. run mirror checks:
    - `npm run lint`
    - `npm run test`
@@ -100,7 +100,7 @@ If a critical bugfix is required:
 
 Before any sync merge:
 
-- [ ] scope limited to `packages/headless/**`
+- [ ] scope limited to `packages/headless-ui/**`
 - [ ] lint/test checks are green
 - [ ] no forbidden imports
 - [ ] source and destination references documented

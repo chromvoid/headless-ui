@@ -7,7 +7,7 @@ This file provides issue-ready tickets for the remaining work before stable rele
 ## How to Use
 
 - copy each issue into tracker as a standalone task
-- keep scope limited to `packages/headless/**` unless issue says otherwise
+- keep scope limited to `packages/headless-ui/**` unless issue says otherwise
 - require evidence links for CI runs and docs updates
 
 Common labels:
@@ -26,7 +26,7 @@ Common labels:
 - **Labels**: `headless`, `release`, `governance`, `ci`
 - **Scope**: add an automated gate that validates SemVer classification in release PR metadata
 - **Deliverables**:
-  - release-governance check script in `packages/headless/scripts/`
+  - release-governance check script in `packages/headless-ui/scripts/`
   - CI workflow job that runs the check for release PR context
 - **Acceptance Criteria**:
   - release PR without explicit SemVer classification fails CI
@@ -54,7 +54,7 @@ Common labels:
 - **Labels**: `headless`, `tests`, `a11y`
 - **Scope**: add component-level integration tests validating adapter-style bindings for keyboard/pointer flows
 - **Deliverables**:
-  - adapter integration tests under `packages/headless/src/adapters/`
+  - adapter integration tests under `packages/headless-ui/src/adapters/`
 - **Acceptance Criteria**:
   - tests validate `model -> bindings -> events -> state` flow
   - tests cover keyboard and pointer paths
@@ -67,8 +67,8 @@ Common labels:
 - **Labels**: `headless`, `docs`
 - **Scope**: align README and ADR-001 metadata with implemented state of package
 - **Deliverables**:
-  - `packages/headless/README.md` updated with all implemented components and structure
-  - `packages/headless/specs/ADR-001-headless-architecture.md` status/version update
+  - `packages/headless-ui/README.md` updated with all implemented components and structure
+  - `packages/headless-ui/specs/ADR-001-headless-architecture.md` status/version update
 - **Acceptance Criteria**:
   - README no longer describes listbox as the only current example
   - ADR-001 status reflects accepted architecture baseline
@@ -79,7 +79,7 @@ Common labels:
 - **Status**: Open
 - **Priority**: High
 - **Labels**: `headless`, `ci`, `release`
-- **Scope**: add root CI job that runs package-specific lint and tests for `packages/headless`
+- **Scope**: add root CI job that runs package-specific lint and tests for `packages/headless-ui`
 - **Deliverables**:
   - root workflow update with headless package job
 - **Acceptance Criteria**:

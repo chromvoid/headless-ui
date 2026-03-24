@@ -10,7 +10,7 @@
 
 ## Context
 
-`packages/headless` is developed in the monorepo for local integration convenience.
+`packages/headless-ui` is developed in the monorepo for local integration convenience.
 The package must still be published as an independent public package from a separate git-shard repository.
 
 Without a clear model, mirror and shard will drift, and releases will become hard to reproduce.
@@ -42,7 +42,7 @@ We need a formal source-of-truth and release flow that answers:
 ### 1. Source of Truth
 
 1. Public git-shard repository is the single canonical source for `headless`.
-2. `packages/headless` in monorepo is mirror-only development workspace.
+2. `packages/headless-ui` in monorepo is mirror-only development workspace.
 
 ### 2. Release Ownership
 
