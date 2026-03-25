@@ -238,7 +238,7 @@ UIKit (`cv-input`) binds to the headless contract as follows:
 
 ## ADR-001 Compliance
 
-- **Runtime Policy**: Reatom v1000 only; no @statx/\* in headless core.
+- **Runtime Policy**: Reatom v1000 only; no legacy state runtime in headless core.
 - **Layering**: core -> interactions -> a11y-contracts -> adapters; adapters remain thin mappings.
 - **Independence**: No imports from @project/_, apps/_, or other out-of-package modules.
 - **Verification**: Mandatory adapter integration tests and standalone package test execution.

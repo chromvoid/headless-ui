@@ -135,7 +135,7 @@ Example:
 ### 5. State Runtime Policy
 
 - **MUST**: Reatom v1000.
-- **MUST NOT**: `@statx/*` in headless core.
+- **MUST NOT**: legacy state runtime in headless core.
 
 ### 6. Testing and Verification
 

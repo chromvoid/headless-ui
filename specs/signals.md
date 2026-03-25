@@ -136,7 +136,7 @@ If you use a signal-aware base element (for example an XLit-style base),
 this gives automatic dependency tracking.
 
 ```ts
-class ListboxView extends XLitElement {
+class ListboxView extends ReatomLitElement {
   model = createListbox()
 
   render() {
