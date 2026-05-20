@@ -702,7 +702,7 @@ export function createMenu(options: CreateMenuOptions): MenuModel {
         'aria-label': parentItem?.label,
       }
     },
-    getSubmenuItemProps(parentItemId: string, childId: string) {
+    getSubmenuItemProps(_parentItemId: string, childId: string) {
       const item = submenuItemById.get(childId)
       if (!item) {
         throw new Error(`Unknown submenu item id: ${childId}`)

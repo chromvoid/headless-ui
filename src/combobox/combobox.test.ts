@@ -726,8 +726,6 @@ describe('createCombobox', () => {
   })
 
   describe('multi-select', () => {
-    const _key = (k: string) => ({key: k, shiftKey: false, ctrlKey: false, metaKey: false, altKey: false})
-
     it('toggleOption adds and removes from selectedIds', () => {
       const combobox = createCombobox({
         options: [
