@@ -17,6 +17,8 @@
 | `feedbackDuration` | `number`                                                  | `1500`                | Milliseconds to show success/error before reverting to idle (clamped >= 0)             |
 | `isDisabled`       | `boolean`                                                 | `false`               | Whether the button starts in a disabled state                                          |
 | `ariaLabel`        | `string \| undefined`                                     | `undefined`           | Accessible label for the button (e.g., `'Copy password'`)                              |
+| `successLabel`     | `string \| undefined`                                     | `'Copied'`            | Accessible/status label used after successful copy                                     |
+| `errorLabel`       | `string \| undefined`                                     | `'Copy failed'`       | Accessible/status label used after copy failure                                        |
 | `onCopy`           | `(value: string) => void \| undefined`                    | `undefined`           | Called on successful copy with the resolved value                                      |
 | `onError`          | `(error: unknown) => void \| undefined`                   | `undefined`           | Called when copy fails with the error                                                  |
 | `clipboard`        | `{ writeText(text: string): Promise<void> } \| undefined` | `navigator.clipboard` | Injectable clipboard adapter for testing and environments without native clipboard API |
@@ -80,8 +82,8 @@ type CopyButtonStatus = 'idle' | 'success' | 'error'
 **`aria-label` resolution:**
 
 - If `options.ariaLabel` is set and status is `'idle'`: returns `ariaLabel` as-is
-- If `options.ariaLabel` is set and status is `'success'`: returns `'Copied'`
-- If `options.ariaLabel` is set and status is `'error'`: returns `'Copy failed'`
+- If `options.ariaLabel` is set and status is `'success'`: returns `successLabel` or `'Copied'`
+- If `options.ariaLabel` is set and status is `'error'`: returns `errorLabel` or `'Copy failed'`
 - If `options.ariaLabel` is not set: `aria-label` is omitted (consumer provides labeling externally)
 
 #### `CopyStatusProps` shape
@@ -240,6 +242,8 @@ This section defines what UIKit (`cv-copy-button`) binds to from the headless mo
 | `feedback-duration` | `feedbackDuration` | Numeric attribute, defaults to `1500`                                                                |
 | `disabled`          | `isDisabled`       | Boolean attribute                                                                                    |
 | `aria-label`        | `ariaLabel`        | Labeling                                                                                             |
+| `success-label`     | `successLabel`     | Localized success feedback label supplied by adapters                                                |
+| `error-label`       | `errorLabel`       | Localized error feedback label supplied by adapters                                                  |
 
 ### UIKit-only concerns (NOT in headless)
 

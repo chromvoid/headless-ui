@@ -17,6 +17,8 @@ export interface CreateCopyButtonOptions {
   feedbackDuration?: number
   isDisabled?: boolean
   ariaLabel?: string
+  successLabel?: string
+  errorLabel?: string
   onCopy?: (value: string) => void
   onError?: (error: unknown) => void
   clipboard?: ClipboardAdapter
@@ -83,6 +85,9 @@ const clampDuration = (v: number): number => Math.max(0, v)
 
 const isSpaceKey = (key: string) => key === ' ' || key === 'Spacebar'
 
+const DEFAULT_SUCCESS_LABEL = 'Copied'
+const DEFAULT_ERROR_LABEL = 'Copy failed'
+
 const STATUS_TO_ICON: Record<CopyButtonStatus, 'copy' | 'success' | 'error'> = {
   idle: 'copy',
   success: 'success',
@@ -95,6 +100,8 @@ const STATUS_TO_ICON: Record<CopyButtonStatus, 'copy' | 'success' | 'error'> = {
 
 export function createCopyButton(options: CreateCopyButtonOptions = {}): CopyButtonModel {
   const clipboard: ClipboardAdapter = options.clipboard ?? navigator.clipboard
+  const successLabel = options.successLabel ?? DEFAULT_SUCCESS_LABEL
+  const errorLabel = options.errorLabel ?? DEFAULT_ERROR_LABEL
 
   // --- atoms ----------------------------------------------------------------
   const statusAtom = atom<CopyButtonStatus>('idle', 'copyButton.status')
@@ -215,9 +222,9 @@ export function createCopyButton(options: CreateCopyButtonOptions = {}): CopyBut
       if (status === 'idle') {
         ariaLabel = options.ariaLabel
       } else if (status === 'success') {
-        ariaLabel = 'Copied'
+        ariaLabel = successLabel
       } else {
-        ariaLabel = 'Copy failed'
+        ariaLabel = errorLabel
       }
     }
 

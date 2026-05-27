@@ -510,6 +510,28 @@ describe('createCopyButton', () => {
         await cb.actions.copy()
         expect(cb.contracts.getButtonProps()['aria-label']).toBe('Copy failed')
       })
+
+      it('uses custom success and error labels when status changes', async () => {
+        const success = createCopyButton({
+          value: 'test',
+          ariaLabel: 'Copy password',
+          successLabel: 'Copied locally',
+          errorLabel: 'Copy rejected',
+          clipboard: mockClipboard(),
+        })
+        await success.actions.copy()
+        expect(success.contracts.getButtonProps()['aria-label']).toBe('Copied locally')
+
+        const error = createCopyButton({
+          value: 'test',
+          ariaLabel: 'Copy password',
+          successLabel: 'Copied locally',
+          errorLabel: 'Copy rejected',
+          clipboard: {writeText: vi.fn().mockRejectedValue(new Error('fail'))},
+        })
+        await error.actions.copy()
+        expect(error.contracts.getButtonProps()['aria-label']).toBe('Copy rejected')
+      })
     })
   })
 
