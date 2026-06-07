@@ -375,7 +375,7 @@ UIKit reads `state.draftText()` and `state.value()` to determine what to display
 
 ## ADR-001 Compliance
 
-- **Runtime Policy**: Reatom v1000 only; no legacy state runtime in headless core.
+- **Runtime Policy**: Reatom v1001 only; no legacy state runtime in headless core.
 - **Layering**: core -> interactions -> a11y-contracts -> adapters; adapters remain thin mappings. The number module sits in the interactions layer, composing the spinbutton core.
 - **Independence**: No imports from @project/_, apps/_, or other out-of-package modules. Only imports from `../spinbutton` (intra-package) and `@reatom/core`.
 - **Composition**: `createNumber` internally creates a `createSpinbutton` instance. It does NOT duplicate spinbutton logic.

@@ -76,7 +76,7 @@
     "test:watch": "vitest --config ./vitest.config.ts --watch"
   },
   "dependencies": {
-    "@reatom/core": "^1000.15.0"
+    "@reatom/core": "^1001.0.0"
   },
   "devDependencies": {
     "@types/node": "^24.11.0",

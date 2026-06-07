@@ -22,7 +22,7 @@
 We need a highly independent headless package for a future UI kit:
 
 - no visual layer;
-- Reatom v1000 as the state runtime;
+- Reatom v1001 as the state runtime;
 - behavior contracts aligned with WAI-ARIA APG.
 
 The package is developed in this monorepo for local integration speed,
@@ -134,7 +134,7 @@ Example:
 
 ### 5. State Runtime Policy
 
-- **MUST**: Reatom v1000.
+- **MUST**: Reatom v1001.
 - **MUST NOT**: legacy state runtime in headless core.
 
 ### 6. Testing and Verification

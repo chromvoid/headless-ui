@@ -172,7 +172,7 @@ UIKit (`cv-textarea`) binds to the headless contract as follows:
 
 ## ADR-001 Compliance
 
-- **Runtime Policy**: Reatom v1000 only; no legacy state runtime in headless core.
+- **Runtime Policy**: Reatom v1001 only; no legacy state runtime in headless core.
 - **Layering**: core/interactions/a11y-contracts/adapters boundaries preserved.
 - **Independence**: no monorepo app imports.
 - **Verification**: standalone headless tests via package command.

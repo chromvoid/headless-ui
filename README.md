@@ -5,7 +5,7 @@ without coupling that behavior to a visual layer.
 
 It is the behavioral foundation for future ChromVoid UI kits and product interfaces:
 
-- reactive component models built on Reatom v1000
+- reactive component models built on Reatom v1001
 - WAI-ARIA APG-aligned keyboard and accessibility contracts
 - explicit state transitions and event handling
 - framework-agnostic rendering ownership
