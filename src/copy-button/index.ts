@@ -1,4 +1,4 @@
-import {action, atom, computed, type Atom, type Computed} from '@reatom/core'
+import {action, atom, computed, wrap, type Atom, type Computed} from '@reatom/core'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -141,17 +141,20 @@ export function createCopyButton(options: CreateCopyButtonOptions = {}): CopyBut
 
   const scheduleRevert = (version: number) => {
     clearRevertTimer()
-    revertTimer = setTimeout(() => {
-      revertTimer = null
-      // Only revert if no newer operation has started
-      if (copyVersion === version) {
-        statusAtom.set('idle')
-      }
-    }, feedbackDurationAtom())
+    revertTimer = setTimeout(
+      wrap(() => {
+        revertTimer = null
+        // Only revert if no newer operation has started
+        if (copyVersion === version) {
+          statusAtom.set('idle')
+        }
+      }),
+      feedbackDurationAtom(),
+    )
   }
 
   // --- actions --------------------------------------------------------------
-  const copy = async (): Promise<void> => {
+  const copy = action(async (): Promise<void> => {
     if (isUnavailableAtom()) return
 
     const version = ++copyVersion
@@ -163,7 +166,7 @@ export function createCopyButton(options: CreateCopyButtonOptions = {}): CopyBut
     try {
       const currentValue = valueAtom()
       if (typeof currentValue === 'function') {
-        resolvedValue = await currentValue()
+        resolvedValue = await wrap(currentValue())
       } else {
         resolvedValue = currentValue
       }
@@ -178,7 +181,7 @@ export function createCopyButton(options: CreateCopyButtonOptions = {}): CopyBut
     }
 
     try {
-      await clipboard.writeText(resolvedValue)
+      await wrap(clipboard.writeText(resolvedValue))
       isCopyingAtom.set(false)
       if (copyVersion !== version) return
       statusAtom.set('success')
@@ -191,7 +194,7 @@ export function createCopyButton(options: CreateCopyButtonOptions = {}): CopyBut
     }
 
     scheduleRevert(version)
-  }
+  }, 'copyButton.copy')
 
   const setDisabled = action((v: boolean) => {
     isDisabledAtom.set(v)

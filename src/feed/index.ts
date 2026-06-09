@@ -1,4 +1,4 @@
-import {action, atom, computed, type Atom, type Computed} from '@reatom/core'
+import {action, atom, computed, wrap, type Atom, type Computed} from '@reatom/core'
 
 // ── Types ──
 
@@ -284,7 +284,7 @@ export function createFeed(options: CreateFeedOptions): FeedModel {
     isBusyAtom.set(true)
 
     try {
-      const loaded = await options.onLoadMore()
+      const loaded = await wrap(options.onLoadMore())
       articlesAtom.set(dedupe([...articlesAtom(), ...loaded]))
       ensureActiveInvariant()
     } catch (e) {
@@ -303,7 +303,7 @@ export function createFeed(options: CreateFeedOptions): FeedModel {
     isBusyAtom.set(true)
 
     try {
-      const loaded = await options.onLoadNewer()
+      const loaded = await wrap(options.onLoadNewer())
       articlesAtom.set(dedupe([...loaded, ...articlesAtom()]))
       ensureActiveInvariant()
     } catch (e) {
