@@ -42,8 +42,8 @@ Full implemented surface at this point (30 patterns) is reflected in:
 
 Latest package validation:
 
-- `npm run lint` - passed
-- `npm run test` - passed
+- `bun run lint` - passed
+- `bun run test` - passed
 - Test count snapshot: 39 files, 248 tests passed
 
 ## Release Readiness Evidence

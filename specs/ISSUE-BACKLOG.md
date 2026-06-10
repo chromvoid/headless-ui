@@ -20,8 +20,8 @@ Applies to all issues unless overridden:
 
 1. Code/docs changed in `packages/headless-ui` only.
 2. No forbidden imports (boundary check remains green).
-3. `npm run lint` passes.
-4. `npm run test` passes.
+3. `bun run lint` passes.
+4. `bun run test` passes.
 5. Public exports are wired in `packages/headless-ui/src/index.ts`.
 6. Component behavior stays aligned with corresponding `specs/components/<component>.md`.
 
@@ -634,7 +634,7 @@ Applies to all issues unless overridden:
   - a deterministic command sequence exists for release preparation and verification
   - package tarball contents are validated against expected public surface
 - **DoD Gates**:
-  - dry-run command set documented (`lint`, `test`, `npm pack`, governance checks)
+  - dry-run command set documented (`lint`, `test`, `bun pm pack`, governance checks)
   - rehearsal output confirms no missing docs/exports in package artifact
   - failure/rollback checklist is documented and reviewable
 

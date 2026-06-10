@@ -56,24 +56,24 @@
     "access": "public"
   },
   "scripts": {
-    "build": "rm -rf dist && tsc -p tsconfig.build.json && node ./scripts/postbuild.mjs",
-    "check:bundle": "npm run build && node ./scripts/check-bundle-contract.mjs",
-    "check:exports": "npm run build && node ./scripts/check-package-exports.mjs",
-    "check:pack": "npm pack --dry-run",
-    "format": "oxfmt --write README.md package.json tsconfig.json tsconfig.build.json vitest.config.ts .oxlintrc.json .oxfmtrc.json src scripts specs",
-    "lint": "npm run lint:types && npm run lint:oxlint && npm run lint:format && npm run lint:boundaries",
-    "lint:boundaries": "node ./scripts/check-standalone-boundaries.mjs",
-    "lint:format": "oxfmt --check README.md package.json tsconfig.json tsconfig.build.json vitest.config.ts .oxlintrc.json .oxfmtrc.json src scripts specs",
-    "lint:oxlint": "oxlint --config ./.oxlintrc.json src scripts vitest.config.ts",
-    "lint:release-governance": "node ./scripts/check-release-governance.mjs",
-    "lint:types": "tsc --noEmit -p tsconfig.json",
-    "prepack": "npm run build",
-    "prepublishOnly": "npm run lint && npm run test && npm run check:pack",
-    "release:changelog": "node ./scripts/generate-changelog.mjs --mode full --out ./specs/release/changelog.generated.md && oxfmt --write ./specs/release/changelog.generated.md",
-    "release:changelog:patch": "node ./scripts/generate-changelog.mjs --mode patch --out ./specs/release/changelog.patch.generated.md && oxfmt --write ./specs/release/changelog.patch.generated.md",
-    "test": "npm run test:unit && npm run check:exports && npm run check:bundle",
-    "test:unit": "vitest run --config ./vitest.config.ts",
-    "test:watch": "vitest --config ./vitest.config.ts --watch"
+    "build": "rm -rf dist && bunx tsc -p tsconfig.build.json && bun ./scripts/postbuild.mjs",
+    "check:bundle": "bun run build && bun ./scripts/check-bundle-contract.mjs",
+    "check:exports": "bun run build && bun ./scripts/check-package-exports.mjs",
+    "check:pack": "bun pm pack --dry-run",
+    "format": "bunx oxfmt --write README.md package.json tsconfig.json tsconfig.build.json vitest.config.ts .oxlintrc.json .oxfmtrc.json src scripts specs",
+    "lint": "bun run lint:types && bun run lint:oxlint && bun run lint:format && bun run lint:boundaries",
+    "lint:boundaries": "bun ./scripts/check-standalone-boundaries.mjs",
+    "lint:format": "bunx oxfmt --check README.md package.json tsconfig.json tsconfig.build.json vitest.config.ts .oxlintrc.json .oxfmtrc.json src scripts specs",
+    "lint:oxlint": "bunx oxlint --config ./.oxlintrc.json src scripts vitest.config.ts",
+    "lint:release-governance": "bun ./scripts/check-release-governance.mjs",
+    "lint:types": "bunx tsc --noEmit -p tsconfig.json",
+    "prepack": "bun run build",
+    "prepublishOnly": "bun run lint && bun run test && bun run check:pack",
+    "release:changelog": "bun ./scripts/generate-changelog.mjs --mode full --out ./specs/release/changelog.generated.md && bunx oxfmt --write ./specs/release/changelog.generated.md",
+    "release:changelog:patch": "bun ./scripts/generate-changelog.mjs --mode patch --out ./specs/release/changelog.patch.generated.md && bunx oxfmt --write ./specs/release/changelog.patch.generated.md",
+    "test": "bun run test:unit && bun run check:exports && bun run check:bundle",
+    "test:unit": "bunx vitest run --config ./vitest.config.ts",
+    "test:watch": "bunx vitest --config ./vitest.config.ts --watch"
   },
   "dependencies": {
     "@reatom/core": "^1001.0.0"
@@ -88,5 +88,6 @@
   },
   "engines": {
     "node": ">=20.0.0"
-  }
+  },
+  "packageManager": "bun@1.3.10"
 }

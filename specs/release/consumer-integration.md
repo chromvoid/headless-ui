@@ -45,9 +45,9 @@ Covered flow:
 
 Recommended package-level gates:
 
-- `npm run lint`
-- `npm run test`
+- `bun run lint`
+- `bun run test`
 
 Targeted integration evidence:
 
-- `npm run test:unit -- src/adapters/adapters.integration.test.ts`
+- `bun run test:unit -- src/adapters/adapters.integration.test.ts`

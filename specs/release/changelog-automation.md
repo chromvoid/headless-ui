@@ -17,7 +17,7 @@ Run from the package root.
 ### Full Release Mode
 
 ```bash
-RELEASE_DATE=2026-02-10 npm run release:changelog
+RELEASE_DATE=2026-02-10 bun run release:changelog
 ```
 
 Output:
@@ -33,7 +33,7 @@ Behavior:
 ### Patch Release Mode
 
 ```bash
-RELEASE_DATE=2026-02-10 CHANGELOG_ISSUES=HLS-161 npm run release:changelog:patch
+RELEASE_DATE=2026-02-10 CHANGELOG_ISSUES=HLS-161 bun run release:changelog:patch
 ```
 
 Output:
@@ -73,4 +73,4 @@ Use this when generated output needs human adjustments for final publication.
 
 - If generator fails due to missing issue ids, fix issue list and re-run.
 - If backlog is inconsistent, update `specs/ISSUE-BACKLOG.md` first, then regenerate.
-- If generated file is manually edited, run `npm run lint:format` before publishing.
+- If generated file is manually edited, run `bun run lint:format` before publishing.

@@ -424,8 +424,8 @@ Exit criteria:
 2. Component spec in `specs/components/<component>.md`.
 3. Export wired in `src/index.ts`.
 4. Full test matrix for supported behavior.
-5. `npm run lint` is green.
-6. `npm run test` is green.
+5. `bun run lint` is green.
+6. `bun run test` is green.
 7. Boundary check remains green.
 
 ### Prioritized Execution Order

@@ -220,11 +220,11 @@ That discipline is enforced through:
 Run all package checks from the package root:
 
 ```sh
-npm ci
-npm run lint
-npm run test
-npm run build
-npm pack --dry-run
+bun install
+bun run lint
+bun run test
+bun run build
+bun pm pack --dry-run
 ```
 
 ## Read Next

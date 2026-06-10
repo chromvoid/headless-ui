@@ -24,8 +24,8 @@ Use this when changes were developed inside monorepo and must be promoted to can
 
 1. changes are limited to `packages/headless-ui/**`
 2. local checks pass:
-   - `npm run lint`
-   - `npm run test`
+   - `bun run lint`
+   - `bun run test`
 3. boundary check is green
 
 ### Procedure
@@ -60,8 +60,8 @@ Use this after shard releases or direct shard-first development.
    - naming: `sync/shard-YYYYMMDD-<tag-or-topic>`
 2. copy/sync shard files into `packages/headless-ui`
 3. run mirror checks:
-   - `npm run lint`
-   - `npm run test`
+   - `bun run lint`
+   - `bun run test`
 4. open monorepo PR with title prefix: `sync(shard): ...`
 5. merge after CI is green
 

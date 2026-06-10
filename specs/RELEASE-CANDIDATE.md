@@ -26,5 +26,5 @@ Coverage focus for the newest tranche (HLS-131..HLS-134):
 
 ## Verification commands
 
-- `npm run lint`
-- `npm run test`
+- `bun run lint`
+- `bun run test`

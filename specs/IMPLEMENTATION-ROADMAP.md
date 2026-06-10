@@ -221,8 +221,8 @@ A component is done when:
 1. component spec exists and is up to date
 2. public API exported via `src/index.ts`
 3. APG contract covered by tests
-4. `npm run lint` passes
-5. `npm run test` passes
+4. `bun run lint` passes
+5. `bun run test` passes
 6. boundary check remains green
 
 ## Execution Order (recommended)

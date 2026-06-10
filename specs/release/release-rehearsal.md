@@ -17,11 +17,11 @@ It defines a deterministic dry-run sequence for shard release preparation and re
 
 Run in `packages/headless-ui`:
 
-1. `npm run lint`
-2. `npm run test`
-3. `npm run lint:boundaries`
-4. `npm run lint:release-governance`
-5. `npm pack --dry-run`
+1. `bun run lint`
+2. `bun run test`
+3. `bun run lint:boundaries`
+4. `bun run lint:release-governance`
+5. `bun pm pack --dry-run`
 
 Notes:
 
@@ -32,7 +32,7 @@ Notes:
 
 ### 1) Lint
 
-- Command: `npm run lint`
+- Command: `bun run lint`
 - Result: Failed
 - Evidence:
   - `lint:types` passed
@@ -41,7 +41,7 @@ Notes:
 
 ### 2) Test
 
-- Command: `npm run test`
+- Command: `bun run test`
 - Result: Failed
 - Evidence:
   - 44 test files passed
@@ -49,19 +49,19 @@ Notes:
 
 ### 3) Boundaries
 
-- Command: `npm run lint:boundaries`
+- Command: `bun run lint:boundaries`
 - Result: Passed
 - Evidence: `headless-boundaries: OK`
 
 ### 4) Release Governance
 
-- Command: `npm run lint:release-governance`
+- Command: `bun run lint:release-governance`
 - Result: Skipped in local context
 - Evidence: `release-governance: no GITHUB_EVENT_PATH, skipping (local/non-GitHub run)`
 
 ### 5) Tarball Packaging
 
-- Command: `npm pack --dry-run`
+- Command: `bun pm pack --dry-run`
 - Result: Passed
 - Evidence:
   - Tarball: `chromvoid-headless-ui-0.0.1.tgz`
@@ -71,7 +71,7 @@ Notes:
 
 ## Tarball Surface Validation
 
-Validated from `npm pack --dry-run` output:
+Validated from `bun pm pack --dry-run` output:
 
 - public entry: `src/index.ts`
 - component modules and tests under `src/**`
@@ -95,7 +95,7 @@ If any rehearsal step fails:
 2. Classify failure as pre-existing or introduced-by-change.
 3. If introduced-by-change, revert only the offending changes and re-run the sequence.
 4. If pre-existing, do not broaden scope in release PR; open follow-up issue and link evidence.
-5. Re-run `npm pack --dry-run` after fixes to confirm artifact integrity.
+5. Re-run `bun pm pack --dry-run` after fixes to confirm artifact integrity.
 
 ## Release Readiness Outcome
 

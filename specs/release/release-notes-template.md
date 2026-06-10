@@ -36,11 +36,11 @@
 
 ## Gate Evidence
 
-- `npm run lint` -> `<pass|fail|blocked (with reason)>`
-- `npm run test` -> `<pass|fail|blocked (with reason)>`
-- `npm run lint:boundaries` -> `<pass|fail>`
-- `npm run lint:release-governance` -> `<pass|skip-local|fail>`
-- `npm pack --dry-run` -> `<pass|fail>`
+- `bun run lint` -> `<pass|fail|blocked (with reason)>`
+- `bun run test` -> `<pass|fail|blocked (with reason)>`
+- `bun run lint:boundaries` -> `<pass|fail>`
+- `bun run lint:release-governance` -> `<pass|skip-local|fail>`
+- `bun pm pack --dry-run` -> `<pass|fail>`
 
 References:
 

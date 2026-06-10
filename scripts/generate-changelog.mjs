@@ -41,7 +41,7 @@ const parseArgs = (argv) => {
 
 const printHelp = () => {
   console.log(
-    'Usage: node scripts/generate-changelog.mjs --mode <full|patch> --date <YYYY-MM-DD> [--issues HLS-161,HLS-162] [--out <path>]',
+    'Usage: bun scripts/generate-changelog.mjs --mode <full|patch> --date <YYYY-MM-DD> [--issues HLS-161,HLS-162] [--out <path>]',
   )
   console.log('')
   console.log('Options:')

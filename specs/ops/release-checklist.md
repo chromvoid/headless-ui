@@ -21,8 +21,8 @@ It enforces ADR-002 (release ownership) and ADR-003 (versioning/deprecation poli
 
 ## 2) Quality Gates
 
-- [ ] `npm run lint` passes in shard
-- [ ] `npm run test` passes in shard
+- [ ] `bun run lint` passes in shard
+- [ ] `bun run test` passes in shard
 - [ ] boundary checks pass (no forbidden imports)
 - [ ] no unresolved TODO/FIXME in contract-critical files
 
