@@ -115,6 +115,21 @@ describe('createCallout', () => {
     })
   })
 
+  describe('setOpen action', () => {
+    it('sets open directly, bypassing the closable gate', () => {
+      // Unlike close(), setOpen() lets a controlled host keep model state in
+      // sync even for a non-closable callout (Batch 2 callout #a).
+      const callout = createCallout({closable: false})
+      expect(callout.state.open()).toBe(true)
+
+      callout.actions.setOpen(false)
+      expect(callout.state.open()).toBe(false)
+
+      callout.actions.setOpen(true)
+      expect(callout.state.open()).toBe(true)
+    })
+  })
+
   describe('setClosable', () => {
     it('toggles closable state', () => {
       const callout = createCallout()

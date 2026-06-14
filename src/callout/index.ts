@@ -26,6 +26,7 @@ export interface CalloutState {
 export interface CalloutActions {
   setVariant(value: CalloutVariant): void
   setClosable(value: boolean): void
+  setOpen(value: boolean): void
   close(): void
   show(): void
 }
@@ -73,6 +74,13 @@ export function createCallout(options: CreateCalloutOptions = {}): CalloutModel 
     openAtom.set(true)
   }, `${idBase}.show`)
 
+  // Sets open state directly, bypassing the closable gate. Lets a host
+  // component keep model state in sync with a controlled `open` property even
+  // for non-closable callouts (where `close()` is intentionally a no-op).
+  const setOpen = action((value: boolean) => {
+    openAtom.set(value)
+  }, `${idBase}.setOpen`)
+
   const actions: CalloutActions = {
     setVariant: action((value: CalloutVariant) => {
       if (VALID_VARIANTS.has(value)) {
@@ -84,6 +92,7 @@ export function createCallout(options: CreateCalloutOptions = {}): CalloutModel 
       closableAtom.set(value)
     }, `${idBase}.setClosable`),
 
+    setOpen,
     close,
     show,
   }
