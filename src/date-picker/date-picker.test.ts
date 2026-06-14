@@ -129,4 +129,37 @@ describe('createDatePicker', () => {
     expect('setCommitMode' in (dp.actions as unknown as Record<string, unknown>)).toBe(false)
     expect('commitMode' in (dp.state as unknown as Record<string, unknown>)).toBe(false)
   })
+
+  it('allows committing a draft on the day of a date-only max bound', () => {
+    const dp = createDatePicker({max: '2026-06-15'})
+    dp.actions.open()
+    dp.actions.selectDraftDate('2026-06-15')
+    dp.actions.setDraftTime('10:00')
+
+    // Apply must be enabled: a date-only max covers the whole day.
+    expect(dp.contracts.getApplyButtonProps().disabled).toBe(false)
+
+    dp.actions.commitDraft()
+    expect(dp.state.committedValue()).toBe('2026-06-15T10:00')
+  })
+
+  it('rejects a draft past the end of a date-only max day', () => {
+    const dp = createDatePicker({max: '2026-06-15'})
+    dp.actions.open()
+    // 2026-06-16 is out of range even though only a date is provided.
+    dp.actions.selectDraftDate('2026-06-16')
+    expect(dp.state.draftDate()).not.toBe('2026-06-16')
+  })
+
+  it('classifies year-boundary spillover days using year and month', () => {
+    const dp = createDatePicker({value: '2026-01-15'})
+    dp.actions.open()
+    const days = dp.contracts.getVisibleDays()
+
+    const dec = days.find((day) => day.date === '2025-12-31')
+    if (dec) expect(dec.month).toBe('prev')
+
+    const feb = days.find((day) => day.date === '2026-02-01')
+    if (feb) expect(feb.month).toBe('next')
+  })
 })

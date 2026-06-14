@@ -356,9 +356,23 @@ const isDateWithinBounds = (date: string, min: string | null, max: string | null
   return true
 }
 
+// A date-only bound ("2026-06-15") covers the whole day, so it must be expanded
+// before comparing against a full date-time value. Otherwise the calendar grid
+// (which slices bounds to 10 chars) marks a day selectable, but the commit/Apply
+// path comparing raw strings rejects it ("2026-06-15T10:00" > "2026-06-15").
+const isDateOnly = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value)
+
+const normalizeMinBound = (min: string | null) =>
+  min && isDateOnly(min) ? `${min}T00:00` : min
+
+const normalizeMaxBound = (max: string | null) =>
+  max && isDateOnly(max) ? `${max}T23:59` : max
+
 const isDateTimeWithinBounds = (value: string, min: string | null, max: string | null) => {
-  if (min && value < min) return false
-  if (max && value > max) return false
+  const minBound = normalizeMinBound(min)
+  const maxBound = normalizeMaxBound(max)
+  if (minBound && value < minBound) return false
+  if (maxBound && value > maxBound) return false
   return true
 }
 
@@ -399,9 +413,15 @@ const buildVisibleDays = (
     const cursor = new Date(start)
     cursor.setUTCDate(start.getUTCDate() + index)
     const date = toDateStringUtc(cursor)
+    const cursorYear = cursor.getUTCFullYear()
     const cursorMonth = cursor.getUTCMonth() + 1
+    // Compare against the displayed year+month, not month alone, so that days
+    // spilling across a year boundary (e.g. Dec 2025 leading into Jan 2026) get
+    // the correct prev/next classification instead of being inverted.
+    const cursorOrdinal = cursorYear * 12 + cursorMonth
+    const displayedOrdinal = year * 12 + month
     const monthKind: CalendarDay['month'] =
-      cursorMonth < month ? 'prev' : cursorMonth > month ? 'next' : 'current'
+      cursorOrdinal < displayedOrdinal ? 'prev' : cursorOrdinal > displayedOrdinal ? 'next' : 'current'
     const inRange = isDateWithinBounds(date, min, max)
     days.push({
       date,
