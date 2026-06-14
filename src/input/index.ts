@@ -46,7 +46,9 @@ export interface InputActions {
   setFocused(focused: boolean): void
   clear(): void
   handleInput(value: string): void
-  handleKeyDown(event: Pick<KeyboardEvent, 'key'> & {preventDefault?: () => void}): void
+  handleKeyDown(
+    event: Pick<KeyboardEvent, 'key'> & {defaultPrevented?: boolean; preventDefault?: () => void},
+  ): void
 }
 
 export interface InputProps {
@@ -180,13 +182,22 @@ export function createInput(options: CreateInputOptions = {}): InputModel {
     setValue(value)
   }, `${idBase}.handleInput`)
 
-  const handleKeyDown = action((event: Pick<KeyboardEvent, 'key'> & {preventDefault?: () => void}) => {
-    if (event.key === 'Escape') {
-      if (clearableAtom() && filled() && !disabledAtom() && !readonlyAtom()) {
-        clear()
+  const handleKeyDown = action(
+    (event: Pick<KeyboardEvent, 'key'> & {defaultPrevented?: boolean; preventDefault?: () => void}) => {
+      // Respect a consumer that already handled the key (e.g. a dialog using
+      // Escape to close) instead of also clearing the field.
+      if (event.defaultPrevented) return
+      if (event.key === 'Escape') {
+        if (clearableAtom() && filled() && !disabledAtom() && !readonlyAtom()) {
+          clear()
+          // Claim the Escape so it doesn't also bubble up to close an ancestor
+          // overlay — the escape consumed the field's value.
+          event.preventDefault?.()
+        }
       }
-    }
-  }, `${idBase}.handleKeyDown`)
+    },
+    `${idBase}.handleKeyDown`,
+  )
 
   // --- Contracts ---
 

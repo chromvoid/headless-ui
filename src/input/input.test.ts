@@ -175,6 +175,34 @@ describe('createInput', () => {
     expect(onClear).not.toHaveBeenCalled()
   })
 
+  it('Escape key calls preventDefault when it clears the value', () => {
+    const input = createInput({value: 'hello', clearable: true})
+    const preventDefault = vi.fn()
+
+    input.actions.handleKeyDown({key: 'Escape', preventDefault})
+    expect(input.state.value()).toBe('')
+    expect(preventDefault).toHaveBeenCalledTimes(1)
+  })
+
+  it('Escape key does not preventDefault when there is nothing to clear', () => {
+    const input = createInput({value: '', clearable: true})
+    const preventDefault = vi.fn()
+
+    input.actions.handleKeyDown({key: 'Escape', preventDefault})
+    expect(preventDefault).not.toHaveBeenCalled()
+  })
+
+  it('Escape key respects an already-handled event (defaultPrevented)', () => {
+    const onClear = vi.fn()
+    const input = createInput({value: 'hello', clearable: true, onClear})
+    const preventDefault = vi.fn()
+
+    input.actions.handleKeyDown({key: 'Escape', defaultPrevented: true, preventDefault})
+    expect(input.state.value()).toBe('hello')
+    expect(onClear).not.toHaveBeenCalled()
+    expect(preventDefault).not.toHaveBeenCalled()
+  })
+
   // --- Password toggle ---
 
   it('togglePasswordVisibility() toggles passwordVisible when type is password and toggle enabled', () => {
