@@ -14,12 +14,15 @@ export interface SwitchState {
   isDisabled: Atom<boolean>
 }
 
+type SwitchKeyDownEvent = Pick<KeyboardEvent, 'key' | 'preventDefault'> &
+  Partial<Pick<KeyboardEvent, 'defaultPrevented' | 'ctrlKey' | 'metaKey' | 'altKey'>>
+
 export interface SwitchActions {
   setOn(value: boolean): void
   setDisabled(value: boolean): void
   toggle(): void
   handleClick(): void
-  handleKeyDown(event: Pick<KeyboardEvent, 'key' | 'preventDefault'>): void
+  handleKeyDown(event: SwitchKeyDownEvent): void
 }
 
 export interface SwitchProps {
@@ -31,7 +34,7 @@ export interface SwitchProps {
   'aria-labelledby'?: string
   'aria-describedby'?: string
   onClick: () => void
-  onKeyDown: (event: Pick<KeyboardEvent, 'key' | 'preventDefault'>) => void
+  onKeyDown: (event: SwitchKeyDownEvent) => void
 }
 
 export interface SwitchContracts {
@@ -69,8 +72,10 @@ export function createSwitch(options: CreateSwitchOptions = {}): SwitchModel {
     toggle()
   }, `${idBase}.handleClick`)
 
-  const handleKeyDown = action((event: Pick<KeyboardEvent, 'key' | 'preventDefault'>) => {
+  const handleKeyDown = action((event: SwitchKeyDownEvent) => {
     if (isDisabledAtom()) return
+    if (event.defaultPrevented) return
+    if (event.ctrlKey || event.metaKey || event.altKey) return
     if (event.key === 'Enter' || isSpaceKey(event.key)) {
       event.preventDefault()
       toggle()

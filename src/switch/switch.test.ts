@@ -256,6 +256,45 @@ describe('createSwitch', () => {
     expect(control.state.isDisabled()).toBe(false)
   })
 
+  it('does not toggle when the keydown was already defaultPrevented', () => {
+    const control = createSwitch({
+      idBase: 'switch-default-prevented',
+      isOn: false,
+    })
+
+    let prevented = false
+    control.actions.handleKeyDown({
+      key: ' ',
+      defaultPrevented: true,
+      preventDefault: () => {
+        prevented = true
+      },
+    })
+
+    expect(control.state.isOn()).toBe(false)
+    expect(prevented).toBe(false)
+  })
+
+  it('does not toggle on Space/Enter when a modifier key is held', () => {
+    const control = createSwitch({
+      idBase: 'switch-modifier',
+      isOn: false,
+    })
+
+    control.actions.handleKeyDown({key: ' ', ctrlKey: true, preventDefault: () => {}})
+    expect(control.state.isOn()).toBe(false)
+
+    control.actions.handleKeyDown({key: 'Enter', metaKey: true, preventDefault: () => {}})
+    expect(control.state.isOn()).toBe(false)
+
+    control.actions.handleKeyDown({key: ' ', altKey: true, preventDefault: () => {}})
+    expect(control.state.isOn()).toBe(false)
+
+    // Plain Space (no modifier) still toggles.
+    control.actions.handleKeyDown({key: ' ', preventDefault: () => {}})
+    expect(control.state.isOn()).toBe(true)
+  })
+
   it('uses default option values', () => {
     const control = createSwitch()
 
