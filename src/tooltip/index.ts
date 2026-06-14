@@ -23,6 +23,8 @@ export interface TooltipActions {
   /** Programmatic close respecting hideDelay. */
   hide(): void
   setDisabled(value: boolean): void
+  /** Clears any pending show/hide timers without changing open state. */
+  cancel(): void
   handleKeyDown(event: Pick<KeyboardEvent, 'key'>): void
   handlePointerEnter(): void
   handlePointerLeave(): void
@@ -187,6 +189,11 @@ export function createTooltip(options: CreateTooltipOptions = {}): TooltipModel 
     isOpenAtom.set(!isOpenAtom())
   }, `${idBase}.handleClick`)
 
+  /** Clears any pending show/hide timers without changing open state. */
+  const cancel = action(() => {
+    clearTimers()
+  }, `${idBase}.cancel`)
+
   const handleKeyDown = action((event: Pick<KeyboardEvent, 'key'>) => {
     if (event.key === 'Escape') {
       close()
@@ -202,6 +209,7 @@ export function createTooltip(options: CreateTooltipOptions = {}): TooltipModel 
     show,
     hide,
     setDisabled,
+    cancel,
     handleKeyDown,
     handlePointerEnter,
     handlePointerLeave,

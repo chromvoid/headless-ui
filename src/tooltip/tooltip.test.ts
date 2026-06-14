@@ -643,4 +643,18 @@ describe('createTooltip', () => {
     expect(trigger.onBlur).toBeDefined()
     expect(getOptionalProp(trigger, 'onClick')).toBeUndefined()
   })
+
+  it('cancel() clears a pending show timer without changing open state', () => {
+    vi.useFakeTimers()
+
+    const model = createTooltip({idBase: 'tooltip-cancel', showDelay: 50, hideDelay: 10})
+    model.actions.handlePointerEnter()
+    expect(model.state.isOpen()).toBe(false)
+
+    model.actions.cancel()
+    vi.advanceTimersByTime(200)
+
+    // Pending open timer was cancelled; state is unchanged (still closed).
+    expect(model.state.isOpen()).toBe(false)
+  })
 })
