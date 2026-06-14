@@ -372,4 +372,14 @@ describe('createTreeview', () => {
       expect(tree.state.selectedIds()).toEqual(['b1'])
     })
   })
+
+  it('toggleExpanded is a no-op for a disabled branch', () => {
+    const tree = createTreeview({
+      nodes: [{id: 'a', disabled: true, children: [{id: 'a1'}]}],
+    })
+
+    expect(tree.state.expandedIds()).not.toContain('a')
+    tree.actions.toggleExpanded('a')
+    expect(tree.state.expandedIds()).not.toContain('a')
+  })
 })

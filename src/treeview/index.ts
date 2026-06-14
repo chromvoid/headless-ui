@@ -304,6 +304,8 @@ export function createTreeview(options: CreateTreeviewOptions): TreeviewModel {
 
   const toggleExpanded = action((id: string) => {
     if (!isBranch(id)) return
+    // A disabled branch must not be expandable/collapsible via its toggle.
+    if (metaById.get(id)?.disabled === true) return
     if (expandedIdsAtom().includes(id)) {
       collapseWithInvariant(id)
     } else {
