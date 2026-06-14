@@ -31,6 +31,7 @@ export interface ToastState {
   items: Atom<ToastItem[]>
   visibleItems: Computed<ToastItem[]>
   isPaused: Atom<boolean>
+  maxVisible: Atom<number>
 }
 
 export interface ToastActions {
@@ -39,6 +40,8 @@ export interface ToastActions {
   clear(): void
   pause(): void
   resume(): void
+  /** Updates the maximum number of visible toasts in place, preserving live toasts/timers. */
+  setMaxVisible(value: number): void
 }
 
 export interface ToastRegionProps {
@@ -76,13 +79,13 @@ export interface ToastModel {
 
 export function createToast(options: CreateToastOptions = {}): ToastModel {
   const idBase = options.idBase ?? 'toast'
-  const maxVisible = Math.max(options.maxVisible ?? 3, 1)
   const defaultDurationMs = Math.max(options.defaultDurationMs ?? 5000, 0)
   const ariaLive = options.ariaLive ?? 'polite'
 
   const itemsAtom = atom<ToastItem[]>([...(options.initialItems ?? [])], `${idBase}.items`)
   const isPausedAtom = atom<boolean>(false, `${idBase}.isPaused`)
-  const visibleItemsAtom = computed(() => itemsAtom().slice(0, maxVisible), `${idBase}.visibleItems`)
+  const maxVisibleAtom = atom<number>(Math.max(options.maxVisible ?? 3, 1), `${idBase}.maxVisible`)
+  const visibleItemsAtom = computed(() => itemsAtom().slice(0, maxVisibleAtom()), `${idBase}.visibleItems`)
 
   const timers = new Map<string, ReturnType<typeof setTimeout>>()
   const remainingMsById = new Map<string, number>()
@@ -102,9 +105,14 @@ export function createToast(options: CreateToastOptions = {}): ToastModel {
     startedAtById.delete(id)
   }
 
+  // Forward-declared so dismiss can schedule timers for newly-visible toasts.
+  let scheduleNewlyVisible: () => void = () => {}
+
   const dismiss = action((id: string) => {
     clearTracking(id)
     itemsAtom.set(itemsAtom().filter((item) => item.id !== id))
+    // A queued toast may have become visible; start its auto-dismiss timer now.
+    scheduleNewlyVisible()
   }, `${idBase}.dismiss`)
 
   const scheduleAutoDismiss = (id: string, durationMs: number) => {
@@ -127,7 +135,17 @@ export function createToast(options: CreateToastOptions = {}): ToastModel {
     timers.set(id, timer)
   }
 
+  const isVisible = (id: string): boolean =>
+    itemsAtom()
+      .slice(0, maxVisibleAtom())
+      .some((item) => item.id === id)
+
   const push = action((item: Omit<ToastItem, 'id'> & {id?: string}) => {
+    // Reject duplicate explicit ids so dismiss() can't remove two toasts at once.
+    if (item.id != null && itemsAtom().some((existing) => existing.id === item.id)) {
+      return item.id
+    }
+
     const id = item.id ?? `${idBase}-${++nonce}`
     const next: ToastItem = {
       id,
@@ -142,9 +160,40 @@ export function createToast(options: CreateToastOptions = {}): ToastModel {
     }
 
     itemsAtom.set([next, ...itemsAtom()])
-    scheduleAutoDismiss(id, next.durationMs ?? defaultDurationMs)
+    // Prepending may have bumped previously-visible toasts into the overflow queue;
+    // stop their timers so they don't expire while hidden.
+    const visibleIds = new Set(itemsAtom().slice(0, maxVisibleAtom()).map((item) => item.id))
+    for (const trackedId of [...timers.keys()]) {
+      if (!visibleIds.has(trackedId)) {
+        stopTimer(trackedId)
+        remainingMsById.delete(trackedId)
+        startedAtById.delete(trackedId)
+      }
+    }
+    // Only start the auto-dismiss timer once the toast is actually visible; toasts
+    // queued behind the overflow limit must not expire before being shown.
+    if (isVisible(id)) {
+      scheduleAutoDismiss(id, next.durationMs ?? defaultDurationMs)
+    }
     return id
   }, `${idBase}.push`)
+
+  // Starts auto-dismiss timers for any currently-visible toast that has a duration
+  // but no running/tracked timer yet (e.g. promoted from the overflow queue).
+  scheduleNewlyVisible = () => {
+    for (const item of itemsAtom().slice(0, maxVisibleAtom())) {
+      const duration = item.durationMs ?? defaultDurationMs
+      if (duration <= 0) continue
+      if (timers.has(item.id) || remainingMsById.has(item.id)) continue
+      scheduleAutoDismiss(item.id, duration)
+    }
+  }
+
+  const setMaxVisible = action((value: number) => {
+    maxVisibleAtom.set(Math.max(value, 1))
+    // Newly-revealed toasts (limit increased) need their timers started.
+    scheduleNewlyVisible()
+  }, `${idBase}.setMaxVisible`)
 
   const clear = action(() => {
     for (const item of itemsAtom()) {
@@ -173,8 +222,12 @@ export function createToast(options: CreateToastOptions = {}): ToastModel {
     if (!isPausedAtom()) return
     isPausedAtom.set(false)
 
-    for (const item of itemsAtom()) {
-      const durationMs = remainingMsById.get(item.id) ?? item.durationMs ?? defaultDurationMs
+    // Only resume timers for toasts that have a tracked remaining duration (i.e. were
+    // visible and ticking before pause); queued toasts must not start counting down.
+    for (const item of itemsAtom().slice(0, maxVisibleAtom())) {
+      const remaining = remainingMsById.get(item.id)
+      const durationMs = remaining ?? item.durationMs ?? defaultDurationMs
+      if (remaining == null && (item.durationMs ?? defaultDurationMs) <= 0) continue
       scheduleAutoDismiss(item.id, durationMs)
     }
   }, `${idBase}.resume`)
@@ -185,6 +238,7 @@ export function createToast(options: CreateToastOptions = {}): ToastModel {
     clear,
     pause,
     resume,
+    setMaxVisible,
   }
 
   const contracts: ToastContracts = {
@@ -224,9 +278,12 @@ export function createToast(options: CreateToastOptions = {}): ToastModel {
     items: itemsAtom,
     visibleItems: visibleItemsAtom,
     isPaused: isPausedAtom,
+    maxVisible: maxVisibleAtom,
   }
 
-  for (const item of itemsAtom()) {
+  // Only schedule auto-dismiss for initially-visible toasts; queued ones start when
+  // promoted (see dismiss/setMaxVisible -> scheduleNewlyVisible).
+  for (const item of itemsAtom().slice(0, maxVisibleAtom())) {
     scheduleAutoDismiss(item.id, item.durationMs ?? defaultDurationMs)
   }
 

@@ -230,4 +230,59 @@ describe('createToast', () => {
     expect(items[0]?.message).toBe('Second')
     expect(items[1]?.message).toBe('First')
   })
+
+  it('rejects duplicate explicit ids (dismiss removes only one toast)', () => {
+    const toast = createToast({idBase: 'toast-dup', defaultDurationMs: 0})
+
+    const id = toast.actions.push({id: 'fixed', message: 'First'})
+    const second = toast.actions.push({id: 'fixed', message: 'Duplicate'})
+
+    expect(second).toBe(id)
+    expect(toast.state.items()).toHaveLength(1)
+    expect(toast.state.items()[0]?.message).toBe('First')
+
+    toast.actions.dismiss('fixed')
+    expect(toast.state.items()).toHaveLength(0)
+  })
+
+  it('does not start the auto-dismiss timer for queued (non-visible) toasts', () => {
+    vi.useFakeTimers()
+    const toast = createToast({idBase: 'toast-queue-timer', defaultDurationMs: 100, maxVisible: 1})
+
+    // Newest is shown first, so the FIRST push becomes the queued (non-visible) one.
+    const queued = toast.actions.push({message: 'Queued'})
+    const visible = toast.actions.push({message: 'Visible'})
+
+    expect(toast.state.items()).toHaveLength(2)
+    expect(toast.state.visibleItems().map((item) => item.id)).toEqual([visible])
+
+    // Expire the visible toast; the queued toast must survive (its timer only starts
+    // once it becomes visible) — it then begins counting down from the dismissal.
+    vi.advanceTimersByTime(100)
+    const remaining = toast.state.items()
+    expect(remaining).toHaveLength(1)
+    expect(remaining[0]?.id).toBe(queued)
+
+    // Now the queued toast is visible and its freshly-started timer expires.
+    vi.advanceTimersByTime(100)
+    expect(toast.state.items()).toHaveLength(0)
+  })
+
+  it('setMaxVisible updates the limit in place and starts timers for revealed toasts', () => {
+    vi.useFakeTimers()
+    const toast = createToast({idBase: 'toast-setmax', defaultDurationMs: 100, maxVisible: 1})
+
+    // First push is queued (newest-first); it becomes visible when the limit grows.
+    const revealed = toast.actions.push({message: 'A'})
+    toast.actions.push({message: 'B'})
+    expect(toast.state.visibleItems()).toHaveLength(1)
+
+    toast.actions.setMaxVisible(2)
+    expect(toast.state.maxVisible()).toBe(2)
+    expect(toast.state.visibleItems()).toHaveLength(2)
+
+    // The revealed toast's timer now runs.
+    vi.advanceTimersByTime(100)
+    expect(toast.state.items().some((item) => item.id === revealed)).toBe(false)
+  })
 })
