@@ -149,9 +149,22 @@ export function createNumber(options: CreateNumberOptions = {}): NumberModel {
   const requiredAtom = atom(options.required ?? false, `${idBase}.required`)
 
   // Compute defaultValue: explicit option > min > 0
-  // Must normalize through spinbutton's clamping/snapping
+  // Must normalize through spinbutton's clamping/snapping so that `filled()`
+  // (value !== defaultValue) compares against the same normalized space the
+  // spinbutton stores. Otherwise e.g. min=5/defaultValue=0 leaves the clear
+  // button visible forever: clear() sets value to 5 (clamped) but filled()
+  // compares to the raw 0. A throwaway spinbutton reuses the exact normalize
+  // logic (clamp + snap) without mutating the live spinbutton.
   const rawDefault = options.defaultValue ?? options.min ?? 0
-  const defaultValueAtom = atom(rawDefault, `${idBase}.defaultValue`)
+  const normalizedDefault = createSpinbutton({
+    idBase: `${idBase}.defaultValueSeed`,
+    value: rawDefault,
+    min: options.min,
+    max: options.max,
+    step: options.step,
+    largeStep: options.largeStep,
+  }).state.value()
+  const defaultValueAtom = atom(normalizedDefault, `${idBase}.defaultValue`)
 
   // Derived state
   const filled = () => spinbutton.state.value() !== defaultValueAtom()

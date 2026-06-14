@@ -34,6 +34,24 @@ describe('createNumber', () => {
       expect(n.state.defaultValue()).toBe(25)
     })
 
+    it('normalizes defaultValue below min up to min so filled() compares correctly', () => {
+      // min=5, defaultValue=0 -> defaultValue must be clamped to 5; otherwise
+      // clear() (which sets value to clamped 5) leaves filled() true forever
+      // because it would compare against the raw 0.
+      const n = createNumber({min: 5, max: 20, value: 10, defaultValue: 0, clearable: true})
+      expect(n.state.defaultValue()).toBe(5)
+
+      n.actions.clear()
+      expect(n.state.value()).toBe(5)
+      expect(n.state.filled()).toBe(false)
+      expect(n.state.showClearButton()).toBe(false)
+    })
+
+    it('snaps defaultValue to step', () => {
+      const n = createNumber({min: 0, max: 10, step: 2, value: 4, defaultValue: 3.3})
+      expect(n.state.defaultValue()).toBe(4)
+    })
+
     it('setValue updates value with clamping and snapping', () => {
       const n = createNumber({min: 0, max: 10, step: 2, value: 0})
       n.actions.setValue(3.3)
