@@ -2,6 +2,7 @@ import {action, atom, type Atom} from '@reatom/core'
 
 import {
   createCompositeNavigation,
+  mapCompositeNavigationIntent,
   type CompositeNavigationOrientation,
 } from '../interactions/composite-navigation'
 
@@ -32,7 +33,10 @@ export interface ToolbarActions {
   movePrev(): void
   moveFirst(): void
   moveLast(): void
-  handleKeyDown(event: Pick<KeyboardEvent, 'key'>): void
+  handleKeyDown(
+    event: Pick<KeyboardEvent, 'key'> &
+      Partial<Pick<KeyboardEvent, 'ctrlKey' | 'metaKey' | 'altKey' | 'shiftKey'>>,
+  ): boolean
   handleToolbarFocus(): void
   handleToolbarBlur(): void
 }
@@ -126,38 +130,43 @@ export function createToolbar(options: CreateToolbarOptions): ToolbarModel {
     navigation.actions.moveLast()
   }, `${idBase}.moveLast`)
 
-  const handleKeyDown = action((event: Pick<KeyboardEvent, 'key'>) => {
-    switch (event.key) {
-      case 'Home':
-        moveFirst()
-        return
-      case 'End':
-        moveLast()
-        return
-      case 'ArrowRight':
-        if (orientation === 'horizontal') {
+  const handleKeyDown = action(
+    (
+      event: Pick<KeyboardEvent, 'key'> &
+        Partial<Pick<KeyboardEvent, 'ctrlKey' | 'metaKey' | 'altKey' | 'shiftKey'>>,
+    ): boolean => {
+      // Modifier-aware mapping: Ctrl/Meta/Alt+Arrow must be ignored (and left to the
+      // browser) instead of navigating. Returns true when the event was handled.
+      const intent = mapCompositeNavigationIntent(
+        {
+          key: event.key,
+          ctrlKey: event.ctrlKey ?? false,
+          metaKey: event.metaKey ?? false,
+          altKey: event.altKey ?? false,
+          shiftKey: event.shiftKey ?? false,
+        },
+        {orientation},
+      )
+
+      switch (intent) {
+        case 'NAV_FIRST':
+          moveFirst()
+          return true
+        case 'NAV_LAST':
+          moveLast()
+          return true
+        case 'NAV_NEXT':
           moveNext()
-        }
-        return
-      case 'ArrowLeft':
-        if (orientation === 'horizontal') {
+          return true
+        case 'NAV_PREV':
           movePrev()
-        }
-        return
-      case 'ArrowDown':
-        if (orientation === 'vertical') {
-          moveNext()
-        }
-        return
-      case 'ArrowUp':
-        if (orientation === 'vertical') {
-          movePrev()
-        }
-        return
-      default:
-        return
-    }
-  }, `${idBase}.handleKeyDown`)
+          return true
+        default:
+          return false
+      }
+    },
+    `${idBase}.handleKeyDown`,
+  )
 
   const handleToolbarBlur = action(() => {
     lastActiveIdAtom.set(navigation.state.activeId())

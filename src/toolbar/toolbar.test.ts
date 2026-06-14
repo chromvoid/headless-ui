@@ -17,6 +17,34 @@ describe('createToolbar', () => {
     expect(toolbar.state.activeId()).toBe('a')
   })
 
+  it('handleKeyDown reports whether the key was handled', () => {
+    const toolbar = createToolbar({
+      idBase: 'toolbar-handled',
+      items: [{id: 'a'}, {id: 'b'}],
+      orientation: 'horizontal',
+    })
+
+    expect(toolbar.actions.handleKeyDown({key: 'ArrowRight'})).toBe(true)
+    expect(toolbar.actions.handleKeyDown({key: 'a'})).toBe(false)
+  })
+
+  it('ignores Ctrl/Meta/Alt + Arrow (modifier-aware navigation)', () => {
+    const toolbar = createToolbar({
+      idBase: 'toolbar-modifiers',
+      items: [{id: 'a'}, {id: 'b'}, {id: 'c'}],
+      orientation: 'horizontal',
+    })
+
+    expect(toolbar.actions.handleKeyDown({key: 'ArrowRight', ctrlKey: true})).toBe(false)
+    expect(toolbar.state.activeId()).toBe('a')
+
+    expect(toolbar.actions.handleKeyDown({key: 'ArrowRight', metaKey: true})).toBe(false)
+    expect(toolbar.state.activeId()).toBe('a')
+
+    expect(toolbar.actions.handleKeyDown({key: 'ArrowRight', altKey: true})).toBe(false)
+    expect(toolbar.state.activeId()).toBe('a')
+  })
+
   it('supports Home and End navigation', () => {
     const toolbar = createToolbar({
       idBase: 'toolbar-home-end',
