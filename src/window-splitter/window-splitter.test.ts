@@ -194,6 +194,23 @@ describe('createWindowSplitter', () => {
     expect(splitter.state.position()).toBe(0)
   })
 
+  it('fixed mode: Home and End are disabled', () => {
+    const splitter = createWindowSplitter({
+      idBase: 'splitter-fixed-home-end',
+      orientation: 'vertical',
+      min: 0,
+      max: 100,
+      position: 50,
+      isFixed: true,
+    })
+
+    splitter.actions.handleKeyDown({key: 'Home'})
+    expect(splitter.state.position()).toBe(50)
+
+    splitter.actions.handleKeyDown({key: 'End'})
+    expect(splitter.state.position()).toBe(50)
+  })
+
   it('fixed mode: arrow keys are disabled', () => {
     const splitter = createWindowSplitter({
       idBase: 'splitter-fixed-arrows',

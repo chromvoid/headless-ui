@@ -247,10 +247,14 @@ export function createWindowSplitter(options: CreateWindowSplitterOptions = {}):
         }
         return
       case 'Home':
-        moveToMin()
+        if (!isFixed) {
+          moveToMin()
+        }
         return
       case 'End':
-        moveToMax()
+        if (!isFixed) {
+          moveToMax()
+        }
         return
       case 'Enter':
         toggleFixed()
