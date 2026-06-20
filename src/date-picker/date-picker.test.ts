@@ -3,6 +3,96 @@ import {describe, expect, it, vi} from 'vitest'
 import {createDatePicker} from './index'
 
 describe('createDatePicker', () => {
+  it('defaults to date-time mode and keeps date-time values', () => {
+    const dp = createDatePicker({
+      value: '2026-01-02T03:04',
+    })
+
+    expect(dp.state.mode()).toBe('date-time')
+    expect(dp.state.committedValue()).toBe('2026-01-02T03:04')
+    expect(dp.state.inputValue()).toBe('2026-01-02T03:04')
+    expect(dp.contracts.getDialogProps()['aria-label']).toBe('Select date and time')
+  })
+
+  it('commits typed date-only input in date mode', () => {
+    const onCommit = vi.fn()
+    const dp = createDatePicker({
+      mode: 'date',
+      onCommit,
+    })
+
+    dp.actions.setInputValue('2026-01-10')
+    expect(dp.state.inputInvalid()).toBe(false)
+    dp.actions.commitInput()
+
+    expect(dp.state.committedDate()).toBe('2026-01-10')
+    expect(dp.state.committedTime()).toBe('00:00')
+    expect(dp.state.committedValue()).toBe('2026-01-10')
+    expect(dp.state.inputValue()).toBe('2026-01-10')
+    expect(dp.contracts.getDialogProps()['aria-label']).toBe('Select date')
+    expect(onCommit).toHaveBeenCalledWith('2026-01-10')
+  })
+
+  it('normalizes typed date-time input to date-only output in date mode', () => {
+    const dp = createDatePicker({
+      mode: 'date',
+    })
+
+    dp.actions.setInputValue('2026-01-10T12:30')
+    dp.actions.commitInput()
+
+    expect(dp.state.committedValue()).toBe('2026-01-10')
+    expect(dp.state.committedTime()).toBe('00:00')
+    expect(dp.state.inputValue()).toBe('2026-01-10')
+  })
+
+  it('normalizes initial date-time value to date-only output in date mode', () => {
+    const dp = createDatePicker({
+      mode: 'date',
+      value: '2026-01-10T12:30',
+    })
+
+    expect(dp.state.committedValue()).toBe('2026-01-10')
+    expect(dp.state.committedTime()).toBe('00:00')
+    expect(dp.state.inputValue()).toBe('2026-01-10')
+  })
+
+  it('commits a selected draft date without visible time state in date mode', () => {
+    const onCommit = vi.fn()
+    const dp = createDatePicker({
+      mode: 'date',
+      onCommit,
+    })
+
+    dp.actions.open()
+    dp.actions.selectDraftDate('2026-02-03')
+    expect(dp.contracts.getApplyButtonProps().disabled).toBe(false)
+
+    dp.actions.commitDraft()
+
+    expect(dp.state.committedValue()).toBe('2026-02-03')
+    expect(dp.state.committedTime()).toBe('00:00')
+    expect(dp.state.isOpen()).toBe(false)
+    expect(onCommit).toHaveBeenCalledWith('2026-02-03')
+  })
+
+  it('switches modes while preserving committed state in the target format', () => {
+    const dp = createDatePicker({
+      value: '2026-01-10T12:30',
+    })
+
+    dp.actions.setMode('date')
+    expect(dp.state.mode()).toBe('date')
+    expect(dp.state.committedValue()).toBe('2026-01-10')
+    expect(dp.state.committedTime()).toBe('00:00')
+    expect(dp.state.inputValue()).toBe('2026-01-10')
+
+    dp.actions.setMode('date-time')
+    expect(dp.state.mode()).toBe('date-time')
+    expect(dp.state.committedValue()).toBe('2026-01-10T00:00')
+    expect(dp.state.inputValue()).toBe('2026-01-10T00:00')
+  })
+
   it('opens as combobox+dialog and exposes aria-expanded/controls', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-01-01T12:00:00.000Z'))
@@ -42,6 +132,22 @@ describe('createDatePicker', () => {
     expect(dp.state.committedValue()).toBe('2026-01-10T09:30')
     expect(onCommit).toHaveBeenCalledWith('2026-01-10T09:30')
     expect(dp.state.isOpen()).toBe(false)
+  })
+
+  it('reopens from the input click contract after a draft commit closes the dialog', () => {
+    const dp = createDatePicker({
+      value: '2026-01-02T03:04',
+    })
+
+    dp.actions.open()
+    dp.actions.selectDraftDate('2026-01-10')
+    dp.actions.setDraftTime('09:30')
+    dp.actions.commitDraft()
+    expect(dp.state.isOpen()).toBe(false)
+
+    dp.contracts.getInputProps().onClick()
+    expect(dp.state.isOpen()).toBe(true)
+    expect(dp.state.draftValue()).toBe('2026-01-10T09:30')
   })
 
   it('cancels draft without committing', () => {

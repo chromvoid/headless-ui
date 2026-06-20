@@ -1,6 +1,7 @@
 import {action, atom, computed, type Atom, type Computed} from '@reatom/core'
 
 export type DatePickerTimeZone = 'local' | 'utc'
+export type DatePickerMode = 'date' | 'date-time'
 
 export interface ParsedDateTime {
   date: string
@@ -23,6 +24,7 @@ export interface CreateDatePickerOptions {
   disabled?: boolean
   readonly?: boolean
   placeholder?: string
+  mode?: DatePickerMode
   locale?: string
   timeZone?: DatePickerTimeZone
   min?: string | null
@@ -59,6 +61,7 @@ export interface DatePickerState {
   readonly: Atom<boolean>
   required: Atom<boolean>
   placeholder: Atom<string>
+  mode: Atom<DatePickerMode>
   locale: Atom<string>
   timeZone: Atom<DatePickerTimeZone>
   min: Atom<string | null>
@@ -89,6 +92,7 @@ export interface DatePickerActions {
   setReadonly(value: boolean): void
   setRequired(value: boolean): void
   setPlaceholder(value: string): void
+  setMode(value: DatePickerMode): void
   setLocale(value: string): void
   setTimeZone(value: DatePickerTimeZone): void
   setMin(value: string | null): void
@@ -132,6 +136,7 @@ export interface DatePickerInputProps {
   'aria-invalid'?: 'true'
   'aria-label'?: string
   onInput: (value: string) => void
+  onClick: () => void
   onKeyDown: (event: DatePickerKeyboardEventLike) => void
   onFocus: () => void
   onBlur: () => void
@@ -290,6 +295,8 @@ const parseDateTimeDefault = (value: string): ParsedDateTime | null => {
 
 const formatDateTimeDefault = (value: ParsedDateTime) => `${value.date}T${value.time}`
 
+const normalizeMode = (value: unknown): DatePickerMode => (value === 'date' ? 'date' : 'date-time')
+
 const splitDateTime = (value: string | null, parse: (input: string) => ParsedDateTime | null) => {
   if (!value) return {date: null as string | null, time: null as string | null}
   const parsed = parse(value)
@@ -362,11 +369,9 @@ const isDateWithinBounds = (date: string, min: string | null, max: string | null
 // path comparing raw strings rejects it ("2026-06-15T10:00" > "2026-06-15").
 const isDateOnly = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value)
 
-const normalizeMinBound = (min: string | null) =>
-  min && isDateOnly(min) ? `${min}T00:00` : min
+const normalizeMinBound = (min: string | null) => (min && isDateOnly(min) ? `${min}T00:00` : min)
 
-const normalizeMaxBound = (max: string | null) =>
-  max && isDateOnly(max) ? `${max}T23:59` : max
+const normalizeMaxBound = (max: string | null) => (max && isDateOnly(max) ? `${max}T23:59` : max)
 
 const isDateTimeWithinBounds = (value: string, min: string | null, max: string | null) => {
   const minBound = normalizeMinBound(min)
@@ -375,6 +380,33 @@ const isDateTimeWithinBounds = (value: string, min: string | null, max: string |
   if (maxBound && value > maxBound) return false
   return true
 }
+
+const normalizeParsedForMode = (parsed: ParsedDateTime, mode: DatePickerMode): ParsedDateTime => {
+  if (mode === 'date-time') return parsed
+  const time = '00:00'
+  return {date: parsed.date, time, full: `${parsed.date}T${time}`}
+}
+
+const formatParsedForMode = (
+  parsed: ParsedDateTime,
+  mode: DatePickerMode,
+  locale: string,
+  formatDateTime: (value: ParsedDateTime, locale: string) => string,
+) => (mode === 'date' ? parsed.date : formatDateTime(parsed, locale))
+
+const getValueForMode = (date: string | null, time: string | null, mode: DatePickerMode) => {
+  if (!date) return null
+  if (mode === 'date') return date
+  return time ? `${date}T${time}` : null
+}
+
+const isParsedWithinBounds = (
+  parsed: ParsedDateTime,
+  mode: DatePickerMode,
+  min: string | null,
+  max: string | null,
+) =>
+  mode === 'date' ? isDateWithinBounds(parsed.date, min, max) : isDateTimeWithinBounds(parsed.full, min, max)
 
 const normalizeTime = (value: string, minuteStep: number): string | null => {
   const match = value.match(/^(\d{1,2}):(\d{1,2})$/)
@@ -439,14 +471,16 @@ export function createDatePicker(options: CreateDatePickerOptions = {}): DatePic
   const idBase = options.idBase ?? 'date-picker'
   const parseDateTime = options.parseDateTime ?? ((value: string) => parseDateTimeDefault(value))
   const formatDateTime = options.formatDateTime ?? ((value: ParsedDateTime) => formatDateTimeDefault(value))
+  const initialMode = normalizeMode(options.mode)
 
   const localeAtom = atom(options.locale ?? 'en-US', `${idBase}.locale`)
+  const modeAtom = atom<DatePickerMode>(initialMode, `${idBase}.mode`)
   const timeZoneAtom = atom<DatePickerTimeZone>(options.timeZone ?? 'local', `${idBase}.timeZone`)
   const minuteStepAtom = atom(clamp(Math.floor(options.minuteStep ?? 1), 1, 60), `${idBase}.minuteStep`)
 
   const initial = splitDateTime(options.value ?? null, (input) => parseDateTime(input, localeAtom()))
   const initialDate = initial.date
-  const initialTime = initial.time
+  const initialTime = initial.date ? (initialMode === 'date' ? '00:00' : initial.time) : initial.time
 
   const today = getTodayDate(timeZoneAtom())
   const todayParts = parseDateOnly(today) ?? {year: 1970, month: 1, day: 1}
@@ -460,9 +494,11 @@ export function createDatePicker(options: CreateDatePickerOptions = {}): DatePic
 
   const inputValueAtom = atom(
     initialDate && initialTime
-      ? formatDateTime(
+      ? formatParsedForMode(
           {date: initialDate, time: initialTime, full: `${initialDate}T${initialTime}`},
+          initialMode,
           localeAtom(),
+          formatDateTime,
         )
       : '',
     `${idBase}.inputValue`,
@@ -483,24 +519,24 @@ export function createDatePicker(options: CreateDatePickerOptions = {}): DatePic
   const hourCycleAtom = atom<12 | 24>(options.hourCycle ?? 24, `${idBase}.hourCycle`)
 
   const hasCommittedSelectionAtom = computed(
-    () => committedDateAtom() != null && committedTimeAtom() != null,
+    () =>
+      modeAtom() === 'date'
+        ? committedDateAtom() != null
+        : committedDateAtom() != null && committedTimeAtom() != null,
     `${idBase}.hasCommittedSelection`,
   )
   const hasDraftSelectionAtom = computed(
-    () => draftDateAtom() != null && draftTimeAtom() != null,
+    () =>
+      modeAtom() === 'date' ? draftDateAtom() != null : draftDateAtom() != null && draftTimeAtom() != null,
     `${idBase}.hasDraftSelection`,
   )
 
   const committedValueAtom = computed(() => {
-    const date = committedDateAtom()
-    const time = committedTimeAtom()
-    return date && time ? `${date}T${time}` : null
+    return getValueForMode(committedDateAtom(), committedTimeAtom(), modeAtom())
   }, `${idBase}.committedValue`)
 
   const draftValueAtom = computed(() => {
-    const date = draftDateAtom()
-    const time = draftTimeAtom()
-    return date && time ? `${date}T${time}` : null
+    return getValueForMode(draftDateAtom(), draftTimeAtom(), modeAtom())
   }, `${idBase}.draftValue`)
 
   const parsedValueAtom = computed(
@@ -511,7 +547,7 @@ export function createDatePicker(options: CreateDatePickerOptions = {}): DatePic
   const canCommitInputAtom = computed(() => {
     const parsed = parsedValueAtom()
     if (!parsed) return false
-    return isDateTimeWithinBounds(parsed.full, minAtom(), maxAtom())
+    return isParsedWithinBounds(normalizeParsedForMode(parsed, modeAtom()), modeAtom(), minAtom(), maxAtom())
   }, `${idBase}.canCommitInput`)
 
   const inputInvalidAtom = computed(() => {
@@ -536,8 +572,13 @@ export function createDatePicker(options: CreateDatePickerOptions = {}): DatePic
   const syncInputFromCommitted = () => {
     const date = committedDateAtom()
     const time = committedTimeAtom()
-    if (date && time) {
-      inputValueAtom.set(formatDateTime({date, time, full: `${date}T${time}`}, localeAtom()))
+    const value = getValueForMode(date, time, modeAtom())
+    if (date && value) {
+      const normalized = normalizeParsedForMode(
+        {date, time: time ?? '00:00', full: `${date}T${time ?? '00:00'}`},
+        modeAtom(),
+      )
+      inputValueAtom.set(formatParsedForMode(normalized, modeAtom(), localeAtom(), formatDateTime))
       return
     }
     inputValueAtom.set('')
@@ -546,8 +587,9 @@ export function createDatePicker(options: CreateDatePickerOptions = {}): DatePic
   const setCommitted = (parsed: ParsedDateTime | null) => {
     const previous = committedValueAtom()
     if (parsed) {
-      committedDateAtom.set(parsed.date)
-      committedTimeAtom.set(parsed.time)
+      const normalized = normalizeParsedForMode(parsed, modeAtom())
+      committedDateAtom.set(normalized.date)
+      committedTimeAtom.set(normalized.time)
     } else {
       committedDateAtom.set(null)
       committedTimeAtom.set(null)
@@ -578,17 +620,17 @@ export function createDatePicker(options: CreateDatePickerOptions = {}): DatePic
   const commitDraftInternal = () => {
     if (disabledAtom() || readonlyAtom()) return false
     const date = draftDateAtom()
-    const time = draftTimeAtom()
-    if (!date || !time) return false
+    const time = draftTimeAtom() ?? '00:00'
+    if (!date) return false
 
-    const full = `${date}T${time}`
-    if (!isDateTimeWithinBounds(full, minAtom(), maxAtom())) {
+    const parsed = normalizeParsedForMode({date, time, full: `${date}T${time}`}, modeAtom())
+    if (!isParsedWithinBounds(parsed, modeAtom(), minAtom(), maxAtom())) {
       return false
     }
 
-    const parsed: ParsedDateTime = {date, time, full}
     setCommitted(parsed)
-    inputValueAtom.set(formatDateTime(parsed, localeAtom()))
+    draftTimeAtom.set(parsed.time)
+    inputValueAtom.set(formatParsedForMode(parsed, modeAtom(), localeAtom(), formatDateTime))
     isOpenAtom.set(false)
     isCalendarFocusedAtom.set(false)
     focusedDateAtom.set(date)
@@ -607,12 +649,13 @@ export function createDatePicker(options: CreateDatePickerOptions = {}): DatePic
       draftTimeAtom.set(committedTime)
     } else {
       const parsedInput = parsedValueAtom()
-      if (parsedInput && isDateTimeWithinBounds(parsedInput.full, minAtom(), maxAtom())) {
-        draftDateAtom.set(parsedInput.date)
-        draftTimeAtom.set(parsedInput.time)
+      if (parsedInput && isParsedWithinBounds(parsedInput, modeAtom(), minAtom(), maxAtom())) {
+        const normalized = normalizeParsedForMode(parsedInput, modeAtom())
+        draftDateAtom.set(normalized.date)
+        draftTimeAtom.set(normalized.time)
       } else {
         draftDateAtom.set(todayAtom())
-        draftTimeAtom.set(getNowTime(timeZoneAtom(), minuteStepAtom()))
+        draftTimeAtom.set(modeAtom() === 'date' ? '00:00' : getNowTime(timeZoneAtom(), minuteStepAtom()))
       }
     }
 
@@ -646,14 +689,15 @@ export function createDatePicker(options: CreateDatePickerOptions = {}): DatePic
     if (disabledAtom() || readonlyAtom()) return
     const parsed = parsedValueAtom()
     if (!parsed) return
-    if (!isDateTimeWithinBounds(parsed.full, minAtom(), maxAtom())) return
+    const normalized = normalizeParsedForMode(parsed, modeAtom())
+    if (!isParsedWithinBounds(normalized, modeAtom(), minAtom(), maxAtom())) return
 
-    setCommitted(parsed)
-    draftDateAtom.set(parsed.date)
-    draftTimeAtom.set(parsed.time)
-    inputValueAtom.set(formatDateTime(parsed, localeAtom()))
-    ensureDisplayedFromDate(parsed.date)
-    focusedDateAtom.set(parsed.date)
+    setCommitted(normalized)
+    draftDateAtom.set(normalized.date)
+    draftTimeAtom.set(normalized.time)
+    inputValueAtom.set(formatParsedForMode(normalized, modeAtom(), localeAtom(), formatDateTime))
+    ensureDisplayedFromDate(normalized.date)
+    focusedDateAtom.set(normalized.date)
     isOpenAtom.set(false)
     isCalendarFocusedAtom.set(false)
   }, `${idBase}.commitInput`)
@@ -684,6 +728,20 @@ export function createDatePicker(options: CreateDatePickerOptions = {}): DatePic
   const setPlaceholder = action((value: string) => {
     placeholderAtom.set(value)
   }, `${idBase}.setPlaceholder`)
+
+  const setMode = action((value: DatePickerMode) => {
+    const nextMode = normalizeMode(value)
+    modeAtom.set(nextMode)
+
+    if (committedDateAtom() && (nextMode === 'date' || !committedTimeAtom())) {
+      committedTimeAtom.set('00:00')
+    }
+    if (draftDateAtom() && (nextMode === 'date' || !draftTimeAtom())) {
+      draftTimeAtom.set('00:00')
+    }
+
+    syncInputFromCommitted()
+  }, `${idBase}.setMode`)
 
   const setLocale = action((value: string) => {
     localeAtom.set(value)
@@ -779,11 +837,18 @@ export function createDatePicker(options: CreateDatePickerOptions = {}): DatePic
     if (disabledAtom() || readonlyAtom()) return
     if (!isDateWithinBounds(date, minAtom(), maxAtom())) return
     draftDateAtom.set(date)
+    if (modeAtom() === 'date' && !draftTimeAtom()) {
+      draftTimeAtom.set('00:00')
+    }
     focusedDateAtom.set(date)
   }, `${idBase}.selectDraftDate`)
 
   const setDraftTime = action((time: string) => {
     if (disabledAtom() || readonlyAtom()) return
+    if (modeAtom() === 'date') {
+      draftTimeAtom.set('00:00')
+      return
+    }
     const normalized = normalizeTime(time, minuteStepAtom())
     if (!normalized) return
     draftTimeAtom.set(normalized)
@@ -792,7 +857,7 @@ export function createDatePicker(options: CreateDatePickerOptions = {}): DatePic
   const jumpToNow = action(() => {
     if (disabledAtom() || readonlyAtom()) return
     const date = getTodayDate(timeZoneAtom())
-    const time = getNowTime(timeZoneAtom(), minuteStepAtom())
+    const time = modeAtom() === 'date' ? '00:00' : getNowTime(timeZoneAtom(), minuteStepAtom())
     draftDateAtom.set(date)
     draftTimeAtom.set(time)
     focusedDateAtom.set(date)
@@ -836,6 +901,10 @@ export function createDatePicker(options: CreateDatePickerOptions = {}): DatePic
       open()
     }
   }, `${idBase}.handleInputKeyDown`)
+
+  const handleInputClick = action(() => {
+    open()
+  }, `${idBase}.handleInputClick`)
 
   const handleDialogKeyDown = action((event: DatePickerKeyboardEventLike) => {
     if (event.key === 'Escape' && (options.closeOnEscape ?? true)) {
@@ -992,6 +1061,7 @@ export function createDatePicker(options: CreateDatePickerOptions = {}): DatePic
         'aria-invalid': inputInvalidAtom() ? 'true' : undefined,
         'aria-label': options.ariaLabel,
         onInput: setInputValue,
+        onClick: handleInputClick,
         onKeyDown: handleInputKeyDown,
         onFocus: () => {
           isInputFocusedAtom.set(true)
@@ -1008,7 +1078,7 @@ export function createDatePicker(options: CreateDatePickerOptions = {}): DatePic
         tabindex: '-1',
         hidden: !isOpenAtom(),
         'aria-modal': 'true',
-        'aria-label': options.ariaLabel ?? 'Select date and time',
+        'aria-label': options.ariaLabel ?? (modeAtom() === 'date' ? 'Select date' : 'Select date and time'),
         onKeyDown: handleDialogKeyDown,
         onPointerDownOutside: handleOutsidePointer,
       }
@@ -1096,8 +1166,15 @@ export function createDatePicker(options: CreateDatePickerOptions = {}): DatePic
       }
     },
     getApplyButtonProps() {
-      const draft = draftValueAtom()
-      const valid = draft ? isDateTimeWithinBounds(draft, minAtom(), maxAtom()) : false
+      const draftDate = draftDateAtom()
+      const draftTime = draftTimeAtom() ?? '00:00'
+      const draft = draftDate
+        ? normalizeParsedForMode(
+            {date: draftDate, time: draftTime, full: `${draftDate}T${draftTime}`},
+            modeAtom(),
+          )
+        : null
+      const valid = draft ? isParsedWithinBounds(draft, modeAtom(), minAtom(), maxAtom()) : false
       return {
         id: `${idBase}-apply`,
         role: 'button',
@@ -1154,6 +1231,7 @@ export function createDatePicker(options: CreateDatePickerOptions = {}): DatePic
     readonly: readonlyAtom,
     required: requiredAtom,
     placeholder: placeholderAtom,
+    mode: modeAtom,
     locale: localeAtom,
     timeZone: timeZoneAtom,
     min: minAtom,
@@ -1184,6 +1262,7 @@ export function createDatePicker(options: CreateDatePickerOptions = {}): DatePic
     setReadonly,
     setRequired,
     setPlaceholder,
+    setMode,
     setLocale,
     setTimeZone,
     setMin,

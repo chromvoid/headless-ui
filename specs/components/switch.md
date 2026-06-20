@@ -17,10 +17,12 @@ While functionally similar to a checkbox, it follows distinct APG keyboard and s
 - `state` (signal-backed):
   - `isOn()`: `boolean`
   - `isDisabled()`: `boolean`
+  - `isLoading()`: `boolean`
 - `actions`:
-  - `toggle()`: toggles the on/off state (no-op if disabled)
+  - `toggle()`: toggles the on/off state (no-op if disabled or loading)
   - `setOn(value: boolean)`: explicitly sets the on state; fires `onCheckedChange` callback
   - `setDisabled(value: boolean)`: explicitly sets the disabled state
+  - `setLoading(value: boolean)`: explicitly sets the loading state
   - `handleClick()`: delegates to `toggle()`
   - `handleKeyDown(event)`: handles keyboard interaction (`Space`, `Enter`)
 - `contracts`:
@@ -33,23 +35,26 @@ While functionally similar to a checkbox, it follows distinct APG keyboard and s
 | `idBase`          | `string`                   | `'switch'` | Base id prefix for generated ids                              |
 | `isOn`            | `boolean`                  | `false`    | Initial on/off state                                          |
 | `isDisabled`      | `boolean`                  | `false`    | Initial disabled state                                        |
+| `isLoading`       | `boolean`                  | `false`    | Initial loading state; blocks user activation while pending   |
 | `ariaLabelledBy`  | `string`                   | —          | Id reference for external label (`aria-labelledby`)           |
 | `ariaDescribedBy` | `string`                   | —          | Id reference for help text / description (`aria-describedby`) |
 | `onCheckedChange` | `(value: boolean) => void` | —          | Callback fired when `isOn` changes via `setOn`                |
 
 ## State Signal Surface
 
-| Signal       | Type            | Derived? | Description                             |
-| ------------ | --------------- | -------- | --------------------------------------- |
-| `isOn`       | `Atom<boolean>` | No       | Single source of truth for on/off state |
-| `isDisabled` | `Atom<boolean>` | No       | Whether user interaction is blocked     |
+| Signal       | Type            | Derived? | Description                                        |
+| ------------ | --------------- | -------- | -------------------------------------------------- |
+| `isOn`       | `Atom<boolean>` | No       | Single source of truth for on/off state            |
+| `isDisabled` | `Atom<boolean>` | No       | Whether user interaction is blocked                |
+| `isLoading`  | `Atom<boolean>` | No       | Whether a pending mutation blocks user interaction |
 
 ## APG and A11y Contract
 
 - role: `switch` (strictly binary; no indeterminate/mixed state)
 - `aria-checked`: `"true" | "false"` (reflects `isOn` state)
-- `aria-disabled`: `"true" | "false"` (reflects `isDisabled` state)
-- `tabindex`: `"0"` when enabled, `"-1"` when disabled
+- `aria-disabled`: `"true" | "false"` (`"true"` when disabled or loading)
+- `aria-busy`: `"true"` when loading; omitted otherwise
+- `tabindex`: `"0"` when enabled, `"-1"` when disabled or loading
 - linkage:
   - `aria-labelledby`: optional, references an external label element
   - `aria-describedby`: optional, references help text or description element
@@ -61,7 +66,7 @@ While functionally similar to a checkbox, it follows distinct APG keyboard and s
 | `Space` | Toggle the `isOn` state; calls `preventDefault` |
 | `Enter` | Toggle the `isOn` state; calls `preventDefault` |
 
-All keyboard actions are no-ops when `isDisabled` is `true`.
+All keyboard actions are no-ops when `isDisabled` or `isLoading` is `true`.
 
 ## Behavior Contract
 
@@ -69,6 +74,8 @@ All keyboard actions are no-ops when `isDisabled` is `true`.
 - `Enter` key toggles the on/off state (specific to `switch` pattern in APG; checkbox only requires `Space`).
 - `Click` interaction toggles the on/off state.
 - Disabled switches do not respond to any toggle actions (`toggle`, `handleClick`, `handleKeyDown`).
+- Loading switches do not respond to any toggle actions (`toggle`, `handleClick`, `handleKeyDown`).
+- `setOn(value)` remains allowed while loading so controlled state, form restore, and reset flows can commit the confirmed value.
 - Unrelated keys (anything other than `Space` or `Enter`) are ignored; `preventDefault` is NOT called.
 
 ## Contract Prop Shapes
@@ -79,9 +86,10 @@ All keyboard actions are no-ops when `isDisabled` is `true`.
 {
   id: string                          // '{idBase}-root'
   role: 'switch'
-  tabindex: '0' | '-1'               // '-1' when disabled
+  tabindex: '0' | '-1'               // '-1' when disabled or loading
   'aria-checked': 'true' | 'false'   // reflects isOn
-  'aria-disabled': 'true' | 'false'  // reflects isDisabled
+  'aria-disabled': 'true' | 'false'  // true when disabled or loading
+  'aria-busy'?: 'true'               // present when loading
   'aria-labelledby'?: string          // present when ariaLabelledBy option is set
   'aria-describedby'?: string         // present when ariaDescribedBy option is set
   onClick: () => void                 // calls handleClick
@@ -91,29 +99,33 @@ All keyboard actions are no-ops when `isDisabled` is `true`.
 
 ## Transitions Table
 
-| Event / Action         | Current State     | Next State / Effect                          |
-| ---------------------- | ----------------- | -------------------------------------------- |
-| `toggle()`             | `isOn=false`      | `isOn=true`; fires `onCheckedChange(true)`   |
-| `toggle()`             | `isOn=true`       | `isOn=false`; fires `onCheckedChange(false)` |
-| `toggle()`             | `isDisabled=true` | no-op                                        |
-| `setOn(value)`         | any               | `isOn=value`; fires `onCheckedChange(value)` |
-| `setDisabled(value)`   | any               | `isDisabled=value`                           |
-| `handleClick()`        | any               | delegates to `toggle()`                      |
-| `handleKeyDown(Space)` | not disabled      | delegates to `toggle()`; `preventDefault`    |
-| `handleKeyDown(Enter)` | not disabled      | delegates to `toggle()`; `preventDefault`    |
-| `handleKeyDown(other)` | any               | no-op; no `preventDefault`                   |
-| `handleKeyDown(any)`   | `isDisabled=true` | no-op; no `preventDefault`                   |
+| Event / Action         | Current State        | Next State / Effect                          |
+| ---------------------- | -------------------- | -------------------------------------------- |
+| `toggle()`             | `isOn=false`         | `isOn=true`; fires `onCheckedChange(true)`   |
+| `toggle()`             | `isOn=true`          | `isOn=false`; fires `onCheckedChange(false)` |
+| `toggle()`             | `isDisabled=true`    | no-op                                        |
+| `toggle()`             | `isLoading=true`     | no-op                                        |
+| `setOn(value)`         | any                  | `isOn=value`; fires `onCheckedChange(value)` |
+| `setDisabled(value)`   | any                  | `isDisabled=value`                           |
+| `setLoading(value)`    | any                  | `isLoading=value`                            |
+| `handleClick()`        | any                  | delegates to `toggle()`                      |
+| `handleKeyDown(Space)` | not disabled/loading | delegates to `toggle()`; `preventDefault`    |
+| `handleKeyDown(Enter)` | not disabled/loading | delegates to `toggle()`; `preventDefault`    |
+| `handleKeyDown(other)` | any                  | no-op; no `preventDefault`                   |
+| `handleKeyDown(any)`   | `isDisabled=true`    | no-op; no `preventDefault`                   |
+| `handleKeyDown(any)`   | `isLoading=true`     | no-op; no `preventDefault`                   |
 
 ## Invariants
 
 1. `isOn` is always a `boolean` (strictly binary; no third state).
-2. A disabled switch cannot be toggled via `toggle()`, `handleClick()`, or `handleKeyDown()`.
+2. A disabled or loading switch cannot be toggled via `toggle()`, `handleClick()`, or `handleKeyDown()`.
 3. `aria-checked` is `"true"` when `isOn` is `true`, and `"false"` otherwise.
-4. `aria-disabled` is `"true"` when `isDisabled` is `true`, and `"false"` otherwise.
-5. `tabindex` is `"0"` when enabled, `"-1"` when disabled.
-6. `aria-labelledby` is present in props only when `ariaLabelledBy` option is provided.
-7. `aria-describedby` is present in props only when `ariaDescribedBy` option is provided.
-8. `getSwitchProps()` always returns a complete, ready-to-spread attribute object.
+4. `aria-disabled` is `"true"` when `isDisabled` or `isLoading` is `true`, and `"false"` otherwise.
+5. `aria-busy` is `"true"` when `isLoading` is `true`, and omitted otherwise.
+6. `tabindex` is `"0"` when enabled, `"-1"` when disabled or loading.
+7. `aria-labelledby` is present in props only when `ariaLabelledBy` option is provided.
+8. `aria-describedby` is present in props only when `ariaDescribedBy` option is provided.
+9. `getSwitchProps()` always returns a complete, ready-to-spread attribute object.
 
 ## Adapter Expectations
 
@@ -123,12 +135,14 @@ UIKit adapter (`cv-switch`) will:
 
 - `state.isOn()` — whether the switch is on or off
 - `state.isDisabled()` — whether user interaction is blocked
+- `state.isLoading()` — whether pending async work temporarily blocks user activation
 
 **Actions called (event handlers, never mutate state directly):**
 
 - `actions.toggle()` — toggle on/off
 - `actions.setOn(value)` — programmatic state set
 - `actions.setDisabled(value)` — update disabled state
+- `actions.setLoading(value)` — update loading state
 - `actions.handleClick()` — on switch click
 - `actions.handleKeyDown(event)` — on switch keydown
 
@@ -153,7 +167,9 @@ UIKit adapter (`cv-switch`) will:
 - disabled state prevents state changes via all interaction paths (`toggle`, `handleClick`, `handleKeyDown`)
 - correct `aria-checked` mapping (`"true"` / `"false"`)
 - correct `aria-disabled` mapping
+- correct `aria-busy` mapping when loading
 - correct `tabindex` mapping (enabled vs disabled)
+- loading state prevents state changes via all interaction paths while `setOn()` remains allowed
 - `aria-labelledby` and `aria-describedby` presence in contract props
 - `onCheckedChange` callback fires on state transitions
 - `preventDefault` called on `Space` and `Enter`

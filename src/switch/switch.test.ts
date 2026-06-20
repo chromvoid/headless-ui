@@ -53,6 +53,24 @@ describe('createSwitch', () => {
     expect(control.state.isOn()).toBe(false)
   })
 
+  it('does not toggle when loading', () => {
+    const changes: boolean[] = []
+    const control = createSwitch({
+      idBase: 'switch-loading',
+      isOn: false,
+      isLoading: true,
+      onCheckedChange: (value) => changes.push(value),
+    })
+
+    control.actions.toggle()
+    control.actions.handleClick()
+    control.actions.handleKeyDown({key: 'Enter', preventDefault: () => {}})
+    control.actions.handleKeyDown({key: ' ', preventDefault: () => {}})
+
+    expect(control.state.isOn()).toBe(false)
+    expect(changes).toEqual([])
+  })
+
   it('maps aria-checked and disabled contract values', () => {
     const control = createSwitch({
       idBase: 'switch-aria',
@@ -72,6 +90,29 @@ describe('createSwitch', () => {
       tabindex: '-1',
       'aria-disabled': 'true',
     })
+  })
+
+  it('maps loading to interaction-unavailable aria contract', () => {
+    const control = createSwitch({
+      idBase: 'switch-loading-aria',
+      isOn: true,
+      isLoading: true,
+    })
+
+    expect(control.contracts.getSwitchProps()).toMatchObject({
+      tabindex: '-1',
+      'aria-checked': 'true',
+      'aria-disabled': 'true',
+      'aria-busy': 'true',
+    })
+
+    control.actions.setLoading(false)
+
+    expect(control.contracts.getSwitchProps()).toMatchObject({
+      tabindex: '0',
+      'aria-disabled': 'false',
+    })
+    expect(control.contracts.getSwitchProps()['aria-busy']).toBeUndefined()
   })
 
   it('maps aria-checked to false after toggle off', () => {
@@ -256,6 +297,35 @@ describe('createSwitch', () => {
     expect(control.state.isDisabled()).toBe(false)
   })
 
+  it('setLoading updates the loading state', () => {
+    const control = createSwitch({
+      idBase: 'switch-set-loading',
+      isLoading: false,
+    })
+
+    expect(control.state.isLoading()).toBe(false)
+    control.actions.setLoading(true)
+    expect(control.state.isLoading()).toBe(true)
+    control.actions.setLoading(false)
+    expect(control.state.isLoading()).toBe(false)
+  })
+
+  it('setOn updates checked state and fires callback while loading', () => {
+    const changes: boolean[] = []
+    const control = createSwitch({
+      idBase: 'switch-loading-seton',
+      isOn: false,
+      isLoading: true,
+      onCheckedChange: (value) => changes.push(value),
+    })
+
+    control.actions.setOn(true)
+    control.actions.setOn(false)
+
+    expect(control.state.isOn()).toBe(false)
+    expect(changes).toEqual([true, false])
+  })
+
   it('does not toggle when the keydown was already defaultPrevented', () => {
     const control = createSwitch({
       idBase: 'switch-default-prevented',
@@ -300,6 +370,7 @@ describe('createSwitch', () => {
 
     expect(control.state.isOn()).toBe(false)
     expect(control.state.isDisabled()).toBe(false)
+    expect(control.state.isLoading()).toBe(false)
     expect(control.contracts.getSwitchProps().id).toBe('switch-root')
   })
 })

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`DatePicker` is a headless APG-aligned contract for a date+time input control with an editable text input and a popup calendar dialog. It combines combobox-style trigger behavior with dialog-based calendar and time selection. The component supports dual-mode commit: user edits to date/time are staged as draft state in the calendar/input and only pushed to committed value through explicit commit actions.
+`DatePicker` is a headless APG-aligned contract for a date/date-time input control with an editable text input and a popup calendar dialog. It combines combobox-style trigger behavior with dialog-based calendar and optional time selection. The component supports dual commit: user edits are staged as draft state in the calendar/input and only pushed to committed value through explicit commit actions. The default public mode is date-time for backward compatibility.
 
 ## Component Files
 
@@ -15,31 +15,34 @@
 
 #### CreateDatePickerOptions
 
-| Option           | Type                                                | Default                                        | Description                                                                 |
-| ---------------- | --------------------------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------ |
-| `idBase`         | `string`                                            | `'date-picker'`                                | Prefix for generated IDs                                                    |
-| `value`          | `string \| null`                                    | `null`                                         | Initial committed value in `YYYY-MM-DDTHH:mm` format (24-hour)              |
-| `required`       | `boolean`                                           | `false`                                        | Required marker for input validation                                        |
-| `disabled`       | `boolean`                                           | `false`                                        | Component disabled state                                                    |
-| `readonly`       | `boolean`                                           | `false`                                        | Prevents user-driven changes                                                |
-| `placeholder`    | `string`                                            | `'Select date and time'`                       | Placeholder for the input                                                   |
-| `locale`         | `string`                                            | `'en-US'`                                      | Locale for label/date formatting                                            |
-| `timeZone`       | `'local' \| 'utc'`                                  | `'local'`                                      | Formatting/parsing basis for value interpretation                           |
-| `min`            | `string`                                            | `null`                                         | Inclusive minimum `YYYY-MM-DDTHH:mm` value                                  |
-| `max`            | `string`                                            | `null`                                         | Inclusive maximum `YYYY-MM-DDTHH:mm` value                                  |
-| `minuteStep`     | `number`                                            | `1`                                            | Minute granularity for draft time updates                                   |
-| `hourCycle`      | `12 \| 24`                                          | `24`                                           | Hour input rendering format                                                 |
-| `closeOnEscape`  | `boolean`                                           | `true`                                         | Whether Escape closes dialog                                                |
-| `ariaLabel`      | `string`                                            | `'Select date and time'`                       | Dialog accessible label                                                     |
-| `parseDateTime`  | `(value: string, locale: string) => ParsedDateTime  | null`                                          | default parser for `YYYY-MM-DD`, `YYYY-MM-DDTHH:mm`, and `YYYY-MM-DD HH:mm` | Hook to customize editable parsing   |
-| `formatDateTime` | `(value: ParsedDateTime, locale: string) => string` | default formatter returning `YYYY-MM-DDTHH:mm` | Hook to control displayed input text                                        |
-| `onInput`        | `(value: string) => void`                           | `undefined`                                    | Called after user typing changes input text                                 |
-| `onCommit`       | `(value: string                                     | null) => void`                                 | `undefined`                                                                 | Called after committed value changes |
-| `onClear`        | `() => void`                                        | `undefined`                                    | Called after `clear()` succeeds                                             |
+| Option           | Type                                                        | Default                                        | Description                                                                                         |
+| ---------------- | ----------------------------------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `idBase`         | `string`                                                    | `'date-picker'`                                | Prefix for generated IDs                                                                            |
+| `value`          | `string \| null`                                            | `null`                                         | Initial committed value: `YYYY-MM-DDTHH:mm` in date-time mode, `YYYY-MM-DD` in date mode            |
+| `required`       | `boolean`                                                   | `false`                                        | Required marker for input validation                                                                |
+| `disabled`       | `boolean`                                                   | `false`                                        | Component disabled state                                                                            |
+| `readonly`       | `boolean`                                                   | `false`                                        | Prevents user-driven changes                                                                        |
+| `placeholder`    | `string`                                                    | `'Select date and time'`                       | Placeholder for the input                                                                           |
+| `mode`           | `'date' \| 'date-time'`                                     | `'date-time'`                                  | Public value/display mode; unknown values normalize to `date-time`                                  |
+| `locale`         | `string`                                                    | `'en-US'`                                      | Locale for label/date formatting                                                                    |
+| `timeZone`       | `'local' \| 'utc'`                                          | `'local'`                                      | Formatting/parsing basis for value interpretation                                                   |
+| `min`            | `string \| null`                                            | `null`                                         | Inclusive minimum; date mode compares the date portion, date-time mode compares full date-time      |
+| `max`            | `string \| null`                                            | `null`                                         | Inclusive maximum; date mode compares the date portion, date-time mode compares full date-time      |
+| `minuteStep`     | `number`                                                    | `1`                                            | Minute granularity for draft time updates in date-time mode                                         |
+| `hourCycle`      | `12 \| 24`                                                  | `24`                                           | Hour input rendering format in date-time mode                                                       |
+| `closeOnEscape`  | `boolean`                                                   | `true`                                         | Whether Escape closes dialog                                                                        |
+| `ariaLabel`      | `string`                                                    | mode default label                             | Dialog accessible label; defaults to `Select date` or `Select date and time` based on mode          |
+| `parseDateTime`  | `(value: string, locale: string) => ParsedDateTime \| null` | default parser                                 | Hook to customize editable parsing; the default accepts `YYYY-MM-DD`, `YYYY-MM-DDTHH:mm`, and space |
+| `formatDateTime` | `(value: ParsedDateTime, locale: string) => string`         | default formatter returning `YYYY-MM-DDTHH:mm` | Hook to control displayed date-time input text; date mode always displays `YYYY-MM-DD`              |
+| `onInput`        | `(value: string) => void`                                   | `undefined`                                    | Called after user typing changes input text                                                         |
+| `onCommit`       | `(value: string \| null) => void`                           | `undefined`                                    | Called after committed value changes                                                                |
+| `onClear`        | `() => void`                                                | `undefined`                                    | Called after `clear()` succeeds                                                                     |
 
 #### Types
 
 ```ts
+type DatePickerMode = 'date' | 'date-time'
+
 interface ParsedDateTime {
   date: string // YYYY-MM-DD
   time: string // HH:mm
@@ -57,40 +60,41 @@ interface CalendarDay {
 
 ## State Signals (signal-backed)
 
-| Signal                    | Type                     | Derived | Description                                                                |
-| ------------------------- | ------------------------ | ------- | -------------------------------------------------------------------------- |
-| `inputValue()`            | `string`                 | No      | Current editable text shown in the input                                   |
-| `isOpen()`                | `boolean`                | No      | Calendar dialog open state                                                 |
-| `focusedDate()`           | `string \| null`         | No      | Focused day in the visible grid (YYYY-MM-DD)                               |
-| `committedDate()`         | `string \| null`         | No      | Committed date part                                                        |
-| `committedTime()`         | `string \| null`         | No      | Committed time part in `HH:mm`                                             |
-| `draftDate()`             | `string \| null`         | No      | Working date value while dialog is open                                    |
-| `draftTime()`             | `string \| null`         | No      | Working time value while dialog is open                                    |
-| `displayedYear()`         | `number`                 | No      | Calendar year currently rendered                                           |
-| `displayedMonth()`        | `number`                 | No      | Calendar month currently rendered (1-12)                                   |
-| `isInputFocused()`        | `boolean`                | No      | Tracks whether combobox input is focused                                   |
-| `isCalendarFocused()`     | `boolean`                | No      | Tracks whether calendar/time zone is focused                               |
-| `disabled()`              | `boolean`                | No      | Reflects disabled mode                                                     |
-| `readonly()`              | `boolean`                | No      | Reflects readonly mode                                                     |
-| `required()`              | `boolean`                | No      | Reflects required mode                                                     |
-| `placeholder()`           | `string`                 | No      | Current placeholder                                                        |
-| `locale()`                | `string`                 | No      | Active locale                                                              |
-| `timeZone()`              | `'local' \| 'utc'`       | No      | Active timezone mode                                                       |
-| `min()`                   | `string \| null`         | No      | Lower bound                                                                |
-| `max()`                   | `string \| null`         | No      | Upper bound                                                                |
-| `minuteStep()`            | `number`                 | No      | Minute step                                                                |
-| `hourCycle()`             | `12 \| 24`               | No      | Hour cycle                                                                 |
-| `isDualCommit()`          | `boolean`                | Yes     | Always `true` for this component spec                                      |
-| `hasCommittedSelection()` | `boolean`                | Yes     | `committedDate() !== null && committedTime() !== null`                     |
-| `hasDraftSelection()`     | `boolean`                | Yes     | `draftDate() !== null && draftTime() !== null`                             |
-| `committedValue()`        | `string \| null`         | Yes     | `hasCommittedSelection() ? `${committedDate()}T${committedTime()}` : null` |
-| `draftValue()`            | `string \| null`         | Yes     | `hasDraftSelection() ? `${draftDate()}T${draftTime()}` : null`             |
-| `canCommitInput()`        | `boolean`                | Yes     | `parsedValue() !== null`                                                   |
-| `parsedValue()`           | `ParsedDateTime \| null` | Yes     | result of `parseDateTime(inputValue(), locale())`                          |
-| `inputInvalid()`          | `boolean`                | Yes     | `inputValue().length > 0 && !canCommitInput()`                             |
-| `visibleDays()`           | `readonly CalendarDay[]` | Yes     | full 6x7 visible matrix for current `displayedMonth`/`displayedYear`       |
-| `today()`                 | `string`                 | Yes     | Local current date in `YYYY-MM-DD`                                         |
-| `selectedCellId()`        | `string \| null`         | Yes     | `isOpen() ? draftDate() : committedDate()`                                 |
+| Signal                    | Type                     | Derived | Description                                                              |
+| ------------------------- | ------------------------ | ------- | ------------------------------------------------------------------------ |
+| `inputValue()`            | `string`                 | No      | Current editable text shown in the input                                 |
+| `isOpen()`                | `boolean`                | No      | Calendar dialog open state                                               |
+| `focusedDate()`           | `string \| null`         | No      | Focused day in the visible grid (YYYY-MM-DD)                             |
+| `committedDate()`         | `string \| null`         | No      | Committed date part                                                      |
+| `committedTime()`         | `string \| null`         | No      | Committed time part in `HH:mm`                                           |
+| `draftDate()`             | `string \| null`         | No      | Working date value while dialog is open                                  |
+| `draftTime()`             | `string \| null`         | No      | Working time value while dialog is open                                  |
+| `displayedYear()`         | `number`                 | No      | Calendar year currently rendered                                         |
+| `displayedMonth()`        | `number`                 | No      | Calendar month currently rendered (1-12)                                 |
+| `isInputFocused()`        | `boolean`                | No      | Tracks whether combobox input is focused                                 |
+| `isCalendarFocused()`     | `boolean`                | No      | Tracks whether calendar/time zone is focused                             |
+| `disabled()`              | `boolean`                | No      | Reflects disabled mode                                                   |
+| `readonly()`              | `boolean`                | No      | Reflects readonly mode                                                   |
+| `required()`              | `boolean`                | No      | Reflects required mode                                                   |
+| `placeholder()`           | `string`                 | No      | Current placeholder                                                      |
+| `mode()`                  | `DatePickerMode`         | No      | Current public mode: `date` or `date-time`                               |
+| `locale()`                | `string`                 | No      | Active locale                                                            |
+| `timeZone()`              | `'local' \| 'utc'`       | No      | Active timezone mode                                                     |
+| `min()`                   | `string \| null`         | No      | Lower bound                                                              |
+| `max()`                   | `string \| null`         | No      | Upper bound                                                              |
+| `minuteStep()`            | `number`                 | No      | Minute step                                                              |
+| `hourCycle()`             | `12 \| 24`               | No      | Hour cycle                                                               |
+| `isDualCommit()`          | `boolean`                | Yes     | Always `true` for this component spec                                    |
+| `hasCommittedSelection()` | `boolean`                | Yes     | Date mode requires committed date; date-time mode requires date and time |
+| `hasDraftSelection()`     | `boolean`                | Yes     | Date mode requires draft date; date-time mode requires date and time     |
+| `committedValue()`        | `string \| null`         | Yes     | `YYYY-MM-DD` in date mode, `YYYY-MM-DDTHH:mm` in date-time mode          |
+| `draftValue()`            | `string \| null`         | Yes     | `YYYY-MM-DD` in date mode, `YYYY-MM-DDTHH:mm` in date-time mode          |
+| `canCommitInput()`        | `boolean`                | Yes     | Parsed input is valid for current mode and bounds                        |
+| `parsedValue()`           | `ParsedDateTime \| null` | Yes     | result of `parseDateTime(inputValue(), locale())`                        |
+| `inputInvalid()`          | `boolean`                | Yes     | `inputValue().length > 0 && !canCommitInput()`                           |
+| `visibleDays()`           | `readonly CalendarDay[]` | Yes     | full 6x7 visible matrix for current `displayedMonth`/`displayedYear`     |
+| `today()`                 | `string`                 | Yes     | Local current date in `YYYY-MM-DD`                                       |
+| `selectedCellId()`        | `string \| null`         | Yes     | `isOpen() ? draftDate() : committedDate()`                               |
 
 ## Actions
 
@@ -104,6 +108,7 @@ interface CalendarDay {
 - `setReadonly(value: boolean)` — updates readonly state
 - `setRequired(value: boolean)` — updates required state
 - `setPlaceholder(value: string)` — updates placeholder
+- `setMode(value: 'date' | 'date-time')` — updates public mode, normalizes committed/draft values, and syncs input text
 - `setLocale(value: string)` — updates locale and re-renders formatted values
 - `setTimeZone(value: 'local' | 'utc')` — updates timezone mode (affects `today()` and `jumpToNow()` sources)
 - `setMin(value: string | null)` / `setMax(value: string | null)` — updates boundaries
@@ -163,6 +168,7 @@ interface DatePickerInputProps {
   'aria-invalid'?: 'true'
   'aria-label'?: string
   onInput: (value: string) => void
+  onClick: () => void
   onKeyDown: (event: KeyboardEvent) => void
   onFocus: () => void
   onBlur: () => void
@@ -267,6 +273,18 @@ interface DatePickerButtonProps {
 - Input typing updates `inputValue` only.
 - `commitInput()` or `commitDraft()` are the **only** ways that mutate committed state in non-disabled/ non-readonly mode.
 - `close()` never commits draft in dual commit mode.
+- `isDualCommit()` is always `true` in both `date` and `date-time` modes.
+
+### Mode Behavior
+
+- `mode='date-time'` is the default and preserves the legacy `YYYY-MM-DDTHH:mm` public value format.
+- `mode='date'` emits and exposes public values as `YYYY-MM-DD`.
+- Date mode accepts typed or external `YYYY-MM-DDTHH:mm` values but normalizes committed and input values to the date portion.
+- Date mode keeps internal time as `00:00` only as an implementation detail for shared draft/commit state.
+- Date mode `Apply` requires a valid draft date only; visible time controls are not required by the contract adapter.
+- Date-time mode `Apply` requires both draft date and draft time.
+- Date mode compares `min` and `max` by their `YYYY-MM-DD` portion; date-time mode compares full date-time bounds.
+- The default dialog label is `Select date` in date mode and `Select date and time` in date-time mode unless `ariaLabel` is provided.
 
 ### Editable Input + Calendar
 
@@ -289,6 +307,7 @@ interface DatePickerButtonProps {
 
 #### Closed input state
 
+- Click on the input opens dialog and positions focus in calendar.
 - `ArrowDown` / `ArrowUp` / `Space` opens dialog and positions focus in calendar.
 - `Enter` calls `commitInput()` (no-op if input is invalid / out of range).
 - `Escape` has no effect when already closed.
@@ -310,29 +329,31 @@ interface DatePickerButtonProps {
 
 ### Core State Transitions
 
-| Event / action                  | Guards                                                                   | Next state                                                                                                    |
-| ------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| `open()`                        | `!isOpen()` and `!disabled()`                                            | `isOpen=true`, `draftDate=committedDate`, `draftTime=committedTime`, `focusedDate` initialized                |
-| `close()`                       | any                                                                      | `isOpen=false`, `draftDate=committedDate`, `draftTime=committedTime`                                          |
-| `clear()`                       | `!disabled() && !readonly()`                                             | all value signals to `null`, `inputValue=''`, `isOpen` unchanged                                              |
-| `setInputValue(v)`              | any                                                                      | `inputValue=v` only                                                                                           |
-| `commitInput()`                 | `!disabled() && !readonly() && canCommitInput()` and within bounds       | `committedDate=parsed.date`, `committedTime=parsed.time`, `inputValue=formatDateTime(parsed)`, `isOpen=false` |
-| `commitInput()`                 | input invalid or out of range                                            | no-op on committed state, `inputInvalid=true`                                                                 |
-| `setDisplayedMonth(year,month)` | valid month/year                                                         | `displayedMonth/year` updated                                                                                 |
-| `moveMonth(-1/1)`               | any                                                                      | `displayedMonth/year` shifted                                                                                 |
-| `moveYear(-1/1)`                | any                                                                      | `displayedYear` shifted                                                                                       |
-| `setFocusedDate(d)`             | valid, non-disabled date in current month view                           | `focusedDate=d`                                                                                               |
-| `selectDraftDate(d)`            | date visible/selectable                                                  | `draftDate=d`                                                                                                 |
-| `setDraftTime(t)`               | valid time format                                                        | `draftTime=normalizedToMinuteStep(t)`                                                                         |
-| `commitDraft()`                 | `isOpen()` and `hasDraftSelection()` and both draft values within bounds | `committedDate=draftDate`, `committedTime=draftTime`, `inputValue=formatDateTime(draft)`, `isOpen=false`      |
-| `commitDraft()`                 | draft invalid                                                            | no-op                                                                                                         |
-| `cancelDraft()`                 | `isOpen()`                                                               | `draftDate=committedDate`, `draftTime=committedTime`, `inputInvalid=false`, `isOpen=true`                     |
-| `jumpToNow()`                   | `!disabled() && !readonly()`                                             | `draftDate=today`, `draftTime=currentTimeAlignedToStep`, calendar month set to draft month                    |
+| Event / action                  | Guards                                                             | Next state                                                                                              |
+| ------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `open()`                        | `!isOpen()` and `!disabled()`                                      | `isOpen=true`, draft state initialized from committed/input/today, `focusedDate` initialized            |
+| `getInputProps().onClick()`     | `!disabled()`                                                      | delegates to `open()`                                                                                   |
+| `close()`                       | any                                                                | `isOpen=false`, `draftDate=committedDate`, `draftTime=committedTime`                                    |
+| `clear()`                       | `!disabled() && !readonly()`                                       | all value signals to `null`, `inputValue=''`, `isOpen` unchanged                                        |
+| `setInputValue(v)`              | any                                                                | `inputValue=v` only                                                                                     |
+| `commitInput()`                 | `!disabled() && !readonly() && canCommitInput()` and within bounds | parsed value normalized for mode, committed/input synced to mode-specific public format, `isOpen=false` |
+| `commitInput()`                 | input invalid or out of range                                      | no-op on committed state, `inputInvalid=true`                                                           |
+| `setDisplayedMonth(year,month)` | valid month/year                                                   | `displayedMonth/year` updated                                                                           |
+| `moveMonth(-1/1)`               | any                                                                | `displayedMonth/year` shifted                                                                           |
+| `moveYear(-1/1)`                | any                                                                | `displayedYear` shifted                                                                                 |
+| `setFocusedDate(d)`             | valid, non-disabled date in current month view                     | `focusedDate=d`                                                                                         |
+| `selectDraftDate(d)`            | date visible/selectable                                            | `draftDate=d`                                                                                           |
+| `setDraftTime(t)`               | valid time format                                                  | `draftTime=normalizedToMinuteStep(t)`                                                                   |
+| `commitDraft()`                 | `isOpen()` and draft selection valid for current mode and bounds   | draft value normalized for mode, committed/input synced to mode-specific public format, `isOpen=false`  |
+| `commitDraft()`                 | draft invalid                                                      | no-op                                                                                                   |
+| `cancelDraft()`                 | `isOpen()`                                                         | `draftDate=committedDate`, `draftTime=committedTime`, `inputInvalid=false`, `isOpen=true`               |
+| `jumpToNow()`                   | `!disabled() && !readonly()`                                       | `draftDate=today`, `draftTime=currentTimeAlignedToStep`, calendar month set to draft month              |
 
 ### Keyboard Transitions
 
 | Key context              | Action triggered                                                        |
 | ------------------------ | ----------------------------------------------------------------------- |
+| Closed, input clicked    | `open()`                                                                |
 | Closed, input focused    | `ArrowDown`/`ArrowUp`/`Space` -> `open()`; `Enter` -> `commitInput()`   |
 | Open, calendar focus     | `ArrowRight`/`ArrowLeft` -> `moveFocusNextDay` / `moveFocusPreviousDay` |
 | Open, calendar focus     | `ArrowDown`/`ArrowUp` -> `moveFocusNextWeek` / `moveFocusPreviousWeek`  |
@@ -345,10 +366,10 @@ interface DatePickerButtonProps {
 ## Invariants
 
 1. `isDualCommit()` is always `true` and never writable.
-2. `committedValue` is `null` iff either `committedDate()` or `committedTime()` is `null`.
-3. `draftDate()` and `draftTime()` are always restored from committed values when dialog closes without commit.
+2. `committedValue` is `null` when `committedDate()` is `null`; date-time mode also requires `committedTime()`.
+3. `draftDate()` and `draftTime()` are restored from committed values when dialog closes without commit.
 4. `visibleDays()` always contains day entries for exactly 6 calendar rows (42 cells).
-5. For every entry in `visibleDays()`, `inRange === (min <= date && date <= max)` when min/max are provided; when min/max are absent, `inRange === true`.
+5. For every entry in `visibleDays()`, date-level `inRange` reflects `min` / `max` date portions; when min/max are absent, `inRange === true`.
 6. Disabled/readonly modes are no-op for commit, commitInput, draft mutations, and keyboard-triggered selection.
 7. Day selection cannot land on dates where `inRange === false`.
 8. `inputInvalid` is `true` exactly when `inputValue` is non-empty and `parsedValue` is `null` or out of bounds.
@@ -356,7 +377,8 @@ interface DatePickerButtonProps {
 10. `getDialogProps().hidden` is `!isOpen()`.
 11. `onInput` callback is only invoked from `setInputValue`, never from programmatic `set` actions.
 12. `onCommit` callback is invoked only from successful `commitInput` and `commitDraft`.
-13. `commitDraft()` never commits invalid draft values.
+13. `commitDraft()` never commits invalid draft values for the active mode.
+14. Date mode public values never include a time segment; date-time mode public values always include `HH:mm`.
 
 ## Adapter Expectations
 
@@ -365,6 +387,7 @@ UIKit (`cv-date-picker`) binds to the model as follows:
 - Signals read:
   - `state.inputValue()` / `state.isOpen()` / `state.isInputFocused()` / `state.isCalendarFocused()`
   - `state.disabled()` / `state.readonly()` / `state.required()` / `state.placeholder()`
+  - `state.mode()`
   - `state.visibleDays()` / `state.focusedDate()` / `state.displayedMonth()` / `state.displayedYear()`
   - `state.hasCommittedSelection()` / `state.committedValue()` / `state.canCommitInput()` / `state.inputInvalid()`
   - `state.min()` / `state.max()` / `state.hourCycle()` / `state.minuteStep()`
@@ -372,6 +395,7 @@ UIKit (`cv-date-picker`) binds to the model as follows:
 - Actions called:
   - `open()` / `close()` / `toggle()`
   - `setInputValue(value)` / `commitInput()` / `clear()`
+  - `setMode(value)`
   - `moveMonth()` / `moveYear()` / `setDisplayedMonth()` / `setFocusedDate()`
   - `moveFocusNextDay()` / `moveFocusPreviousDay()` / `moveFocusNextWeek()` / `moveFocusPreviousWeek()`
   - `selectDraftDate()` / `setDraftTime()` / `commitDraft()` / `cancelDraft()` / `jumpToNow()`
@@ -383,12 +407,12 @@ UIKit (`cv-date-picker`) binds to the model as follows:
   - `contracts.getCalendarGridProps()` on calendar body
   - `contracts.getCalendarDayProps(date)` for each visible day
   - `contracts.getMonthNavButtonProps()` and `contracts.getYearNavButtonProps()`
-  - `contracts.getHourInputProps()` / `contracts.getMinuteInputProps()`
+  - `contracts.getHourInputProps()` / `contracts.getMinuteInputProps()` when rendering date-time controls
   - `contracts.getApplyButtonProps()` / `contracts.getCancelButtonProps()` / `contracts.getClearButtonProps()`
 
 ## Minimum Test Matrix
 
-- open/close behavior, focus initialization, and outside-dismiss behavior
+- open/close behavior, input-click open behavior, focus initialization, and outside-dismiss behavior
 - editable input typing and validation flow
 - dual commit path: dialog selection updates draft only
 - apply/cancel path: commitDraft and cancelDraft semantics
