@@ -1,6 +1,6 @@
 {
   "name": "@chromvoid/headless-ui",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Headless interaction and accessibility contracts for future UI kit",
   "keywords": [
     "a11y",
