@@ -162,7 +162,11 @@ export function createToast(options: CreateToastOptions = {}): ToastModel {
     itemsAtom.set([next, ...itemsAtom()])
     // Prepending may have bumped previously-visible toasts into the overflow queue;
     // stop their timers so they don't expire while hidden.
-    const visibleIds = new Set(itemsAtom().slice(0, maxVisibleAtom()).map((item) => item.id))
+    const visibleIds = new Set(
+      itemsAtom()
+        .slice(0, maxVisibleAtom())
+        .map((item) => item.id),
+    )
     for (const trackedId of [...timers.keys()]) {
       if (!visibleIds.has(trackedId)) {
         stopTimer(trackedId)

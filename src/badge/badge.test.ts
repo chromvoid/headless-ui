@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {createBadge} from './index'
+import {createBadge, type BadgeSize, type BadgeVariant, type CreateBadgeOptions} from './index'
 
 describe('createBadge', () => {
   describe('default state', () => {
@@ -126,12 +126,13 @@ describe('createBadge', () => {
 
     it('rejects invalid variant values', () => {
       const badge = createBadge({variant: 'primary'})
-      badge.actions.setVariant('invalid' as any)
+      badge.actions.setVariant('invalid' as unknown as BadgeVariant)
       expect(badge.state.variant()).toBe('primary')
     })
 
     it('defaults invalid initial variant to neutral', () => {
-      const badge = createBadge({variant: 'invalid' as any})
+      const options = {variant: 'invalid'} as unknown as CreateBadgeOptions
+      const badge = createBadge(options)
       expect(badge.state.variant()).toBe('neutral')
     })
   })
@@ -152,12 +153,13 @@ describe('createBadge', () => {
 
     it('rejects invalid size values', () => {
       const badge = createBadge({size: 'large'})
-      badge.actions.setSize('xl' as any)
+      badge.actions.setSize('xl' as unknown as BadgeSize)
       expect(badge.state.size()).toBe('large')
     })
 
     it('defaults invalid initial size to medium', () => {
-      const badge = createBadge({size: 'xl' as any})
+      const options = {size: 'xl'} as unknown as CreateBadgeOptions
+      const badge = createBadge(options)
       expect(badge.state.size()).toBe('medium')
     })
   })

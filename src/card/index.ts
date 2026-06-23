@@ -23,9 +23,7 @@ export interface CardActions {
   handleKeyDown(event: Pick<KeyboardEvent, 'key'> & {preventDefault?: () => void}): void
 }
 
-export interface CardProps {
-  // empty — card root carries no interactive attributes
-}
+export type CardProps = Record<string, never>
 
 export interface CardTriggerProps {
   id: string

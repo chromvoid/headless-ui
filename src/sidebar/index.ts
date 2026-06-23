@@ -1,6 +1,7 @@
 import {atom, computed, type Atom, type Computed} from '@reatom/core'
 
 import {createDialog} from '../dialog'
+import type {OverlayDismissIntent} from '../interactions/overlay-focus'
 
 export interface CreateSidebarOptions {
   id?: string
@@ -27,7 +28,7 @@ export interface SidebarActions {
   expand(): void
   collapse(): void
   openOverlay(): void
-  closeOverlay(intent?: string): void
+  closeOverlay(intent?: OverlayDismissIntent): void
   setMobile(value: boolean): void
   handleKeyDown(event: Pick<KeyboardEvent, 'key'>): void
   handleOutsidePointer(): void
@@ -144,10 +145,10 @@ export function createSidebar(options: CreateSidebarOptions = {}): SidebarModel 
       dialog.actions.open()
     },
 
-    closeOverlay(intent?: string) {
+    closeOverlay(intent?: OverlayDismissIntent) {
       if (!mobileAtom()) return
       if (!dialog.state.isOpen()) return
-      dialog.actions.close(intent as any)
+      dialog.actions.close(intent)
     },
 
     setMobile(value: boolean) {

@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {createCallout} from './index'
+import {createCallout, type CalloutVariant, type CreateCalloutOptions} from './index'
 
 describe('createCallout', () => {
   describe('default state', () => {
@@ -69,12 +69,13 @@ describe('createCallout', () => {
 
     it('rejects invalid variant values', () => {
       const callout = createCallout({variant: 'success'})
-      callout.actions.setVariant('invalid' as any)
+      callout.actions.setVariant('invalid' as unknown as CalloutVariant)
       expect(callout.state.variant()).toBe('success')
     })
 
     it('defaults invalid initial variant to info', () => {
-      const callout = createCallout({variant: 'invalid' as any})
+      const options = {variant: 'invalid'} as unknown as CreateCalloutOptions
+      const callout = createCallout(options)
       expect(callout.state.variant()).toBe('info')
     })
   })

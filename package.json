@@ -57,7 +57,7 @@
   },
   "scripts": {
     "build": "rm -rf dist && bunx tsc -p tsconfig.build.json && bun ./scripts/postbuild.mjs",
-    "check:bundle": "bun run build && bun ./scripts/check-bundle-contract.mjs",
+    "check:bundle": "bun run build && node ./scripts/check-bundle-contract.mjs",
     "check:exports": "bun run build && bun ./scripts/check-package-exports.mjs",
     "check:pack": "bun pm pack --dry-run",
     "format": "bunx oxfmt --write README.md package.json tsconfig.json tsconfig.build.json vitest.config.ts .oxlintrc.json .oxfmtrc.json src scripts specs",

@@ -7,6 +7,14 @@
     "es2022": true
   },
   "ignorePatterns": ["node_modules/**", "dist/**", "coverage/**", "**/*.d.ts", "specs/**/*.md"],
+  "overrides": [
+    {
+      "files": ["scripts/**/*.mjs"],
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ],
   "rules": {
     "no-unused-vars": [
       "error",

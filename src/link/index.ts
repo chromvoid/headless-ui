@@ -7,7 +7,7 @@ export interface CreateLinkOptions {
   onPress?: () => void
 }
 
-export interface LinkState {}
+export type LinkState = Record<string, never>
 
 export interface LinkActions {
   press(): void
