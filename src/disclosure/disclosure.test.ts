@@ -43,6 +43,27 @@ describe('createDisclosure', () => {
     expect(model.state.isOpen()).toBe(false)
   })
 
+  it('uses runtime direction for horizontal open and close keys', () => {
+    let direction: 'ltr' | 'rtl' = 'ltr'
+    const model = createDisclosure({
+      idBase: 'disclosure-direction',
+      getDirection: () => direction,
+    })
+
+    model.actions.handleKeyDown({key: 'ArrowRight'})
+    expect(model.state.isOpen()).toBe(true)
+
+    direction = 'rtl'
+    model.actions.handleKeyDown({key: 'ArrowRight'})
+    expect(model.state.isOpen()).toBe(false)
+
+    model.actions.handleKeyDown({key: 'ArrowLeft'})
+    expect(model.state.isOpen()).toBe(true)
+
+    model.actions.handleKeyDown({key: 'ArrowUp'})
+    expect(model.state.isOpen()).toBe(false)
+  })
+
   it('keeps aria-expanded and controls linkage in sync', () => {
     const model = createDisclosure({
       idBase: 'disclosure-a11y',

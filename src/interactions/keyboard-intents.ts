@@ -1,3 +1,5 @@
+import {resolveLogicalHorizontalArrow, type TextDirection} from '../core/direction'
+
 export type ListOrientation = 'vertical' | 'horizontal'
 export type KeyboardSelectionMode = 'single' | 'multiple'
 
@@ -13,6 +15,7 @@ export interface ListKeyboardIntentContext {
   orientation: ListOrientation
   selectionMode: KeyboardSelectionMode
   rangeSelectionEnabled: boolean
+  direction?: TextDirection
 }
 
 export type ListKeyboardIntent =
@@ -35,17 +38,23 @@ export function mapListboxKeyboardIntent(
   event: KeyboardEventLike,
   context: ListKeyboardIntentContext,
 ): ListKeyboardIntent | null {
-  const nextKey = context.orientation === 'horizontal' ? 'ArrowRight' : 'ArrowDown'
-  const prevKey = context.orientation === 'horizontal' ? 'ArrowLeft' : 'ArrowUp'
+  const horizontalArrow =
+    context.orientation === 'horizontal'
+      ? resolveLogicalHorizontalArrow(event.key, context.direction ?? 'ltr')
+      : null
+  const isNextKey =
+    context.orientation === 'horizontal' ? horizontalArrow === 'next' : event.key === 'ArrowDown'
+  const isPrevKey =
+    context.orientation === 'horizontal' ? horizontalArrow === 'previous' : event.key === 'ArrowUp'
 
   const rangeEnabled = context.selectionMode === 'multiple' && context.rangeSelectionEnabled
 
-  if (event.key === nextKey) {
+  if (isNextKey) {
     if (rangeEnabled && event.shiftKey) return 'RANGE_NEXT'
     return 'NAV_NEXT'
   }
 
-  if (event.key === prevKey) {
+  if (isPrevKey) {
     if (rangeEnabled && event.shiftKey) return 'RANGE_PREV'
     return 'NAV_PREV'
   }

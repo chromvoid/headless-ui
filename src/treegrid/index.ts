@@ -1,5 +1,7 @@
 import {action, atom, computed, type Atom, type Computed} from '@reatom/core'
 
+import {resolveLogicalHierarchyArrow, type LogicalHierarchyArrow, type TextDirection} from '../core/direction'
+
 export type TreegridSelectionMode = 'single' | 'multiple'
 export type TreegridCellRole = 'gridcell' | 'rowheader' | 'columnheader'
 
@@ -52,6 +54,7 @@ export interface CreateTreegridOptions {
   initialExpandedRowIds?: readonly string[]
   initialActiveCellId?: TreegridCellId | null
   initialSelectedRowIds?: readonly string[]
+  getDirection?: () => TextDirection
 }
 
 export interface TreegridState {
@@ -470,16 +473,16 @@ export function createTreegrid(options: CreateTreegridOptions): TreegridModel {
     selectedRowIdsAtom.set(next)
   }, `${idBase}.toggleRowSelection`)
 
-  const moveLeft = action(() => {
+  const moveHierarchyBackward = () => {
     const current = normalizeCell(activeCellIdAtom())
-    if (!current) return
+    if (!current) return false
 
     const rowMeta = metaById.get(current.rowId)
-    if (!rowMeta) return
+    if (!rowMeta) return false
 
     if (isBranchRow(current.rowId) && isRowExpanded(current.rowId)) {
       collapseRow(current.rowId)
-      return
+      return true
     }
 
     if (rowMeta.parentId != null) {
@@ -492,38 +495,53 @@ export function createTreegrid(options: CreateTreegridOptions): TreegridModel {
           setActiveCell(fallback)
         }
       }
-      return
+      return true
     }
 
-    moveWithinRow(-1)
-  }, `${idBase}.moveLeft`)
+    return false
+  }
 
-  const moveRight = action(() => {
+  const moveHierarchyForward = () => {
     const current = normalizeCell(activeCellIdAtom())
-    if (!current) return
+    if (!current) return false
 
     if (isBranchRow(current.rowId) && !isRowExpanded(current.rowId)) {
       expandRow(current.rowId)
-      return
+      return true
     }
 
     if (isBranchRow(current.rowId) && isRowExpanded(current.rowId)) {
       const firstChildId = metaById.get(current.rowId)?.childIds[0]
       if (firstChildId != null && !isCellDisabled(firstChildId, current.colId)) {
         setActiveCell({rowId: firstChildId, colId: current.colId})
-        return
+        return true
       }
 
       if (firstChildId != null) {
         const fallback = firstEnabledCellInRow(firstChildId)
         if (fallback) {
           setActiveCell(fallback)
-          return
+          return true
         }
       }
     }
 
-    moveWithinRow(1)
+    return false
+  }
+
+  const moveHorizontal = (hierarchyArrow: LogicalHierarchyArrow, physicalDirection: 1 | -1) => {
+    const hierarchyHandled = hierarchyArrow === 'forward' ? moveHierarchyForward() : moveHierarchyBackward()
+    if (!hierarchyHandled) {
+      moveWithinRow(physicalDirection)
+    }
+  }
+
+  const moveLeft = action(() => {
+    moveHorizontal('backward', -1)
+  }, `${idBase}.moveLeft`)
+
+  const moveRight = action(() => {
+    moveHorizontal('forward', 1)
   }, `${idBase}.moveRight`)
 
   const handleKeyDown = action((event: TreegridKeyboardEventLike) => {
@@ -537,11 +555,13 @@ export function createTreegrid(options: CreateTreegridOptions): TreegridModel {
         moveDown()
         return
       case 'ArrowLeft':
-        moveLeft()
+      case 'ArrowRight': {
+        const hierarchyArrow = resolveLogicalHierarchyArrow(event.key, options.getDirection?.() ?? 'ltr')
+        if (hierarchyArrow != null) {
+          moveHorizontal(hierarchyArrow, event.key === 'ArrowLeft' ? -1 : 1)
+        }
         return
-      case 'ArrowRight':
-        moveRight()
-        return
+      }
       case 'Home':
         if (ctrlOrMeta) {
           moveGridStart()

@@ -1,5 +1,6 @@
 import {action, atom, type Atom} from '@reatom/core'
 
+import type {TextDirection} from '../core/direction'
 import {mapListboxKeyboardIntent} from '../interactions/keyboard-intents'
 
 export type TabsOrientation = 'horizontal' | 'vertical'
@@ -18,6 +19,7 @@ export interface CreateTabsOptions {
   activationMode?: TabsActivationMode
   initialActiveTabId?: string | null
   initialSelectedTabId?: string | null
+  getDirection?: () => TextDirection
 }
 
 export interface TabsState {
@@ -170,6 +172,7 @@ export function createTabs(options: CreateTabsOptions): TabsModel {
         orientation,
         selectionMode: 'single',
         rangeSelectionEnabled: false,
+        direction: options.getDirection?.() ?? 'ltr',
       })
 
       if (intent == null) return

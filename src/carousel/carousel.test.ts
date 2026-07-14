@@ -182,6 +182,24 @@ describe('createCarousel', () => {
     expect(carousel.state.activeSlideIndex()).toBe(0)
   })
 
+  it('uses runtime reading direction for keyboard navigation', () => {
+    let direction: 'ltr' | 'rtl' = 'ltr'
+    const carousel = createCarousel({
+      slides: [{id: 's1'}, {id: 's2'}, {id: 's3'}],
+      getDirection: () => direction,
+    })
+
+    carousel.actions.handleKeyDown({key: 'ArrowRight'})
+    expect(carousel.state.activeSlideIndex()).toBe(1)
+
+    direction = 'rtl'
+    carousel.actions.handleKeyDown({key: 'ArrowLeft'})
+    expect(carousel.state.activeSlideIndex()).toBe(2)
+
+    carousel.actions.handleKeyDown({key: 'ArrowRight'})
+    expect(carousel.state.activeSlideIndex()).toBe(1)
+  })
+
   it('pauses autoplay on pointer hover and resumes on leave', () => {
     vi.useFakeTimers()
 

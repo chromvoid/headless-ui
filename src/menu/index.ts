@@ -1,5 +1,6 @@
 import {action, atom, computed, type Atom, type Computed} from '@reatom/core'
 
+import {resolveLogicalHierarchyArrow, type TextDirection} from '../core/direction'
 import {mapListboxKeyboardIntent} from '../interactions/keyboard-intents'
 import {
   advanceTypeaheadState,
@@ -39,6 +40,7 @@ export interface CreateMenuOptions {
   typeaheadTimeout?: number
   groups?: readonly MenuGroup[]
   splitButton?: boolean
+  getDirection?: () => TextDirection
 }
 
 export interface MenuState {
@@ -436,6 +438,7 @@ export function createMenu(options: CreateMenuOptions): MenuModel {
     if (!isOpenAtom()) return
 
     const submenuOpen = openSubmenuIdAtom() != null
+    const hierarchyArrow = resolveLogicalHierarchyArrow(event.key, options.getDirection?.() ?? 'ltr')
 
     // Handle typeahead first (for printable chars that aren't handled by intent mapper)
     const typeaheadEvent = {
@@ -452,7 +455,7 @@ export function createMenu(options: CreateMenuOptions): MenuModel {
         closeSubmenu()
         return
       }
-      if (event.key === 'ArrowLeft') {
+      if (hierarchyArrow === 'backward') {
         closeSubmenu()
         return
       }
@@ -496,8 +499,8 @@ export function createMenu(options: CreateMenuOptions): MenuModel {
       return
     }
 
-    // ArrowRight opens submenu if current item has one
-    if (event.key === 'ArrowRight') {
+    // The logical forward arrow opens a submenu in the current reading direction.
+    if (hierarchyArrow === 'forward') {
       const currentActiveId = activeIdAtom()
       if (currentActiveId != null) {
         const item = itemById.get(currentActiveId)
@@ -508,8 +511,8 @@ export function createMenu(options: CreateMenuOptions): MenuModel {
       return
     }
 
-    // ArrowLeft is no-op at top level
-    if (event.key === 'ArrowLeft') {
+    // The logical backward arrow is a no-op at the top level.
+    if (hierarchyArrow === 'backward') {
       return
     }
 

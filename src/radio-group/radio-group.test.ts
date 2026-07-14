@@ -112,4 +112,22 @@ describe('createRadioGroup', () => {
     const propsB = group.contracts.getRadioProps('b')
     expect(propsB['aria-describedby']).toBeUndefined()
   })
+
+  it('uses runtime direction for horizontal arrows and keeps vertical arrows stable', () => {
+    let direction: 'ltr' | 'rtl' = 'ltr'
+    const group = createRadioGroup({
+      items: [{id: 'a'}, {id: 'b'}, {id: 'c'}],
+      getDirection: () => direction,
+    })
+
+    group.actions.handleKeyDown({key: 'ArrowRight'})
+    expect(group.state.activeId()).toBe('b')
+
+    direction = 'rtl'
+    group.actions.handleKeyDown({key: 'ArrowLeft'})
+    expect(group.state.activeId()).toBe('c')
+
+    group.actions.handleKeyDown({key: 'ArrowUp'})
+    expect(group.state.activeId()).toBe('b')
+  })
 })

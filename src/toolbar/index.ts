@@ -1,5 +1,6 @@
 import {action, atom, type Atom} from '@reatom/core'
 
+import type {TextDirection} from '../core/direction'
 import {
   createCompositeNavigation,
   mapCompositeNavigationIntent,
@@ -19,6 +20,7 @@ export interface CreateToolbarOptions {
   wrap?: boolean
   ariaLabel?: string
   initialActiveId?: string | null
+  getDirection?: () => TextDirection
 }
 
 export interface ToolbarState {
@@ -145,7 +147,10 @@ export function createToolbar(options: CreateToolbarOptions): ToolbarModel {
           altKey: event.altKey ?? false,
           shiftKey: event.shiftKey ?? false,
         },
-        {orientation},
+        {
+          orientation,
+          direction: options.getDirection?.() ?? 'ltr',
+        },
       )
 
       switch (intent) {

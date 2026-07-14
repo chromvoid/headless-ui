@@ -74,6 +74,52 @@ describe('composite-navigation primitives', () => {
     expect(model.state.activeId()).toBe('a')
   })
 
+  it('reads horizontal direction for every key event and keeps modified arrows ignored', () => {
+    let direction: 'ltr' | 'rtl' = 'ltr'
+    const model = createCompositeNavigation({
+      idBase: 'cn-direction',
+      orientation: 'horizontal',
+      items: [{id: 'a'}, {id: 'b'}, {id: 'c'}],
+      getDirection: () => direction,
+    })
+    const key = (value: string, ctrlKey = false) => ({
+      key: value,
+      shiftKey: false,
+      ctrlKey,
+      metaKey: false,
+      altKey: false,
+    })
+
+    model.actions.handleKeyDown(key('ArrowRight'))
+    expect(model.state.activeId()).toBe('b')
+
+    direction = 'rtl'
+    model.actions.handleKeyDown(key('ArrowLeft'))
+    expect(model.state.activeId()).toBe('c')
+
+    model.actions.handleKeyDown(key('ArrowLeft', true))
+    expect(model.state.activeId()).toBe('c')
+  })
+
+  it('keeps vertical navigation independent of text direction', () => {
+    const model = createCompositeNavigation({
+      idBase: 'cn-vertical-rtl',
+      orientation: 'vertical',
+      items: [{id: 'a'}, {id: 'b'}],
+      getDirection: () => 'rtl',
+    })
+
+    model.actions.handleKeyDown({
+      key: 'ArrowDown',
+      shiftKey: false,
+      ctrlKey: false,
+      metaKey: false,
+      altKey: false,
+    })
+
+    expect(model.state.activeId()).toBe('b')
+  })
+
   it('exposes deterministic focus props for roving and active-descendant strategies', () => {
     const roving = createCompositeNavigation({
       idBase: 'cn-roving',

@@ -23,3 +23,4 @@ export interface HeadlessModel {
 
 export * from './selection'
 export * from './value-range'
+export * from './direction'

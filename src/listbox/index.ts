@@ -1,6 +1,7 @@
 import {action, atom, computed, type Atom, type Computed} from '@reatom/core'
 
 import type {FocusStrategy, RootA11yProps} from '../a11y-contracts'
+import type {TextDirection} from '../core/direction'
 import {
   normalizeSelection,
   selectOnly as selectOnlyPrimitive,
@@ -53,6 +54,7 @@ export interface CreateListboxOptions {
   idBase?: string
   initialActiveId?: string | null
   initialSelectedIds?: readonly string[]
+  getDirection?: () => TextDirection
 }
 
 export interface ListboxState {
@@ -322,6 +324,7 @@ export function createListbox(options: CreateListboxOptions): ListboxModel {
         orientation,
         selectionMode,
         rangeSelectionEnabled,
+        direction: options.getDirection?.() ?? 'ltr',
       })
 
       if (intent == null) return

@@ -224,6 +224,24 @@ describe('createCard', () => {
       expect(preventDefault).toHaveBeenCalledTimes(1)
     })
 
+    it('uses runtime direction for horizontal expand and collapse keys', () => {
+      let direction: 'ltr' | 'rtl' = 'ltr'
+      const card = createCard({
+        isExpandable: true,
+        getDirection: () => direction,
+      })
+
+      card.actions.handleKeyDown({key: 'ArrowRight'})
+      expect(card.state.isExpanded()).toBe(true)
+
+      direction = 'rtl'
+      card.actions.handleKeyDown({key: 'ArrowRight'})
+      expect(card.state.isExpanded()).toBe(false)
+
+      card.actions.handleKeyDown({key: 'ArrowLeft'})
+      expect(card.state.isExpanded()).toBe(true)
+    })
+
     it('ArrowUp is a no-op on already collapsed card (still calls preventDefault)', () => {
       const onExpandedChange = vi.fn()
       const preventDefault = vi.fn()

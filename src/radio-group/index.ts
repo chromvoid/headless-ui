@@ -1,5 +1,6 @@
 import {action, atom, type Atom} from '@reatom/core'
 
+import {resolveLogicalHorizontalArrow, type TextDirection} from '../core/direction'
 import {
   createCompositeNavigation,
   type CompositeNavigationOrientation,
@@ -20,6 +21,7 @@ export interface CreateRadioGroupOptions {
   ariaLabelledBy?: string
   initialValue?: string | null
   initialActiveId?: string | null
+  getDirection?: () => TextDirection
 }
 
 export interface RadioGroupState {
@@ -156,12 +158,20 @@ export function createRadioGroup(options: CreateRadioGroupOptions): RadioGroupMo
   const handleKeyDown = action((event: Pick<KeyboardEvent, 'key'>) => {
     if (isDisabledAtom()) return
 
+    const horizontalArrow = resolveLogicalHorizontalArrow(event.key, options.getDirection?.() ?? 'ltr')
+    if (horizontalArrow === 'next') {
+      moveNext()
+      return
+    }
+    if (horizontalArrow === 'previous') {
+      movePrev()
+      return
+    }
+
     switch (event.key) {
-      case 'ArrowRight':
       case 'ArrowDown':
         moveNext()
         return
-      case 'ArrowLeft':
       case 'ArrowUp':
         movePrev()
         return

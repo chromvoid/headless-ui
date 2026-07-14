@@ -720,6 +720,31 @@ describe('createContextMenu', () => {
       expect(model.state.activeId()).toBe('more')
     })
 
+    it('uses runtime direction for sub-menu open and close', () => {
+      let direction: 'ltr' | 'rtl' = 'rtl'
+      const model = createContextMenu({
+        idBase: 'ctx-sub-direction',
+        items: [
+          {id: 'cut'},
+          {
+            id: 'more',
+            type: 'submenu',
+            children: [{id: 'select-all'}],
+          },
+        ],
+        getDirection: () => direction,
+      })
+
+      model.actions.openAt(0, 0)
+      model.actions.handleKeyDown({key: 'ArrowDown'})
+      model.actions.handleKeyDown({key: 'ArrowLeft'})
+      expect(model.state.openSubmenuId()).toBe('more')
+
+      direction = 'ltr'
+      model.actions.handleKeyDown({key: 'ArrowLeft'})
+      expect(model.state.openSubmenuId()).toBeNull()
+    })
+
     it('Escape from sub-menu closes sub-menu, not parent', () => {
       const model = createContextMenu({
         idBase: 'ctx-sub-esc',

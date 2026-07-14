@@ -113,6 +113,32 @@ describe('createTreeview', () => {
     expect(tree.state.activeId()).toBe('a')
   })
 
+  it('uses runtime direction for hierarchy forward and backward', () => {
+    let direction: 'ltr' | 'rtl' = 'ltr'
+    const tree = createTreeview({
+      nodes: sampleNodes,
+      initialActiveId: 'a',
+      getDirection: () => direction,
+    })
+    const key = (value: string) => ({
+      key: value,
+      shiftKey: false,
+      ctrlKey: false,
+      metaKey: false,
+      altKey: false,
+    })
+
+    tree.actions.handleKeyDown(key('ArrowRight'))
+    expect(tree.state.expandedIds()).toContain('a')
+
+    direction = 'rtl'
+    tree.actions.handleKeyDown(key('ArrowLeft'))
+    expect(tree.state.activeId()).toBe('a1')
+
+    tree.actions.handleKeyDown(key('ArrowRight'))
+    expect(tree.state.activeId()).toBe('a')
+  })
+
   it('keeps focus invariant by moving active to collapsed parent', () => {
     const tree = createTreeview({
       nodes: sampleNodes,

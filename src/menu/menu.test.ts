@@ -978,6 +978,24 @@ describe('createMenu', () => {
       expect(menu.state.activeId()).toBe('file')
     })
 
+    it('uses runtime direction for submenu open and close', () => {
+      let direction: 'ltr' | 'rtl' = 'rtl'
+      const menu = createMenu({
+        items: [{id: 'file', label: 'File', hasSubmenu: true}],
+        initialOpen: true,
+        getDirection: () => direction,
+      })
+      menu.actions.setSubmenuItems('file', [{id: 'new', label: 'New'}])
+      menu.actions.setActive('file')
+
+      menu.actions.handleMenuKeyDown(mkEvent('ArrowLeft'))
+      expect(menu.state.openSubmenuId()).toBe('file')
+
+      direction = 'ltr'
+      menu.actions.handleMenuKeyDown(mkEvent('ArrowLeft'))
+      expect(menu.state.openSubmenuId()).toBeNull()
+    })
+
     it('Escape closes submenu (not entire menu)', () => {
       const menu = mkSubmenuMenu()
       menu.actions.setActive('file')

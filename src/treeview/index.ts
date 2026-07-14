@@ -1,5 +1,6 @@
 import {action, atom, type Atom} from '@reatom/core'
 
+import {resolveLogicalHierarchyArrow, type TextDirection} from '../core/direction'
 import {selectOnly as selectOnlyPrimitive, toggleSelection} from '../core/selection'
 import {mapListboxKeyboardIntent} from '../interactions/keyboard-intents'
 
@@ -20,6 +21,7 @@ export interface CreateTreeviewOptions {
   initialExpandedIds?: readonly string[]
   initialActiveId?: string | null
   initialSelectedIds?: readonly string[]
+  getDirection?: () => TextDirection
 }
 
 interface TreeNodeMeta {
@@ -351,8 +353,9 @@ export function createTreeview(options: CreateTreeviewOptions): TreeviewModel {
   const handleKeyDown = action(
     (event: Pick<KeyboardEvent, 'key' | 'shiftKey' | 'ctrlKey' | 'metaKey' | 'altKey'>) => {
       const activeId = activeIdAtom()
+      const hierarchyArrow = resolveLogicalHierarchyArrow(event.key, options.getDirection?.() ?? 'ltr')
 
-      if (event.key === 'ArrowRight') {
+      if (hierarchyArrow === 'forward') {
         if (activeId == null) {
           moveFirst()
           return
@@ -376,7 +379,7 @@ export function createTreeview(options: CreateTreeviewOptions): TreeviewModel {
         return
       }
 
-      if (event.key === 'ArrowLeft') {
+      if (hierarchyArrow === 'backward') {
         if (activeId == null) {
           moveFirst()
           return

@@ -1,5 +1,6 @@
 import {action, atom, type Atom} from '@reatom/core'
 
+import {resolveLogicalHierarchyArrow, type LogicalHierarchyArrow, type TextDirection} from '../core/direction'
 import {
   isTypeaheadEvent,
   advanceTypeaheadState,
@@ -35,6 +36,7 @@ export interface CreateContextMenuOptions {
   closeOnOutsidePointer?: boolean
   /** Long-press duration in ms for touch devices. Default: 500 */
   longPressDuration?: number
+  getDirection?: () => TextDirection
 }
 
 export interface ContextMenuState {
@@ -314,14 +316,17 @@ export function createContextMenu(options: CreateContextMenuOptions): ContextMen
     }
   }, `${idBase}.handleTargetKeyDown`)
 
-  const handleSubmenuKeyDown = (event: ContextMenuKeyboardEventLike): boolean => {
+  const handleSubmenuKeyDown = (
+    event: ContextMenuKeyboardEventLike,
+    hierarchyArrow: LogicalHierarchyArrow | null,
+  ): boolean => {
     const openSubId = openSubmenuIdAtom()
     if (openSubId == null) return false
 
     const subInfo = submenuItems.get(openSubId)
     if (!subInfo) return false
 
-    if (event.key === 'Escape' || event.key === 'ArrowLeft') {
+    if (event.key === 'Escape' || hierarchyArrow === 'backward') {
       closeSubmenu()
       return true
     }
@@ -373,17 +378,18 @@ export function createContextMenu(options: CreateContextMenuOptions): ContextMen
       metaKey: event.metaKey ?? false,
       altKey: event.altKey ?? false,
     }
+    const hierarchyArrow = resolveLogicalHierarchyArrow(event.key, options.getDirection?.() ?? 'ltr')
 
     // If a sub-menu is open, delegate to sub-menu handler first
-    if (handleSubmenuKeyDown(event)) return
+    if (handleSubmenuKeyDown(event, hierarchyArrow)) return
 
     if (event.key === 'Escape' || event.key === 'Tab') {
       close()
       return
     }
 
-    // Check for ArrowRight to open sub-menu
-    if (event.key === 'ArrowRight') {
+    // The logical forward arrow opens a sub-menu in the current reading direction.
+    if (hierarchyArrow === 'forward') {
       const activeId = menu.state.activeId()
       if (activeId != null && submenuItems.has(activeId)) {
         const subInfo = submenuItems.get(activeId)!

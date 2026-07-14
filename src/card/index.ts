@@ -1,11 +1,14 @@
 import {action, atom, type Atom} from '@reatom/core'
 
+import {resolveLogicalHierarchyArrow, type TextDirection} from '../core/direction'
+
 export interface CreateCardOptions {
   idBase?: string
   isExpandable?: boolean
   isExpanded?: boolean
   isDisabled?: boolean
   onExpandedChange?: (isExpanded: boolean) => void
+  getDirection?: () => TextDirection
 }
 
 export interface CardState {
@@ -102,13 +105,15 @@ export function createCard(options: CreateCardOptions = {}): CardModel {
       return
     }
 
-    if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
+    const hierarchyArrow = resolveLogicalHierarchyArrow(event.key, options.getDirection?.() ?? 'ltr')
+
+    if (event.key === 'ArrowDown' || hierarchyArrow === 'forward') {
       event.preventDefault?.()
       expand()
       return
     }
 
-    if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
+    if (event.key === 'ArrowUp' || hierarchyArrow === 'backward') {
       event.preventDefault?.()
       collapse()
       return

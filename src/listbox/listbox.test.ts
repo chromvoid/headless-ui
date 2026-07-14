@@ -850,4 +850,31 @@ describe('createListbox', () => {
     expect(listbox.state.activeId()).toBe('c')
     expect(listbox.state.selectedIds()).toEqual(['a', 'b', 'c'])
   })
+
+  it('uses runtime direction for horizontal navigation and range selection', () => {
+    let direction: 'ltr' | 'rtl' = 'ltr'
+    const listbox = createListbox({
+      options: [{id: 'a'}, {id: 'b'}, {id: 'c'}],
+      orientation: 'horizontal',
+      selectionMode: 'multiple',
+      rangeSelection: true,
+      initialActiveId: 'a',
+      getDirection: () => direction,
+    })
+    const key = (value: string, shiftKey = false) => ({
+      key: value,
+      ctrlKey: false,
+      shiftKey,
+      metaKey: false,
+      altKey: false,
+    })
+
+    listbox.actions.handleKeyDown(key('ArrowRight'))
+    expect(listbox.state.activeId()).toBe('b')
+
+    direction = 'rtl'
+    listbox.actions.handleKeyDown(key('ArrowLeft', true))
+    expect(listbox.state.activeId()).toBe('c')
+    expect(listbox.state.selectedIds()).toEqual(['a', 'b', 'c'])
+  })
 })

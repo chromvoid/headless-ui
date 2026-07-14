@@ -41,6 +41,24 @@ describe('mapListboxKeyboardIntent', () => {
     expect(intent).toBe('NAV_NEXT')
   })
 
+  it('maps horizontal arrows in RTL reading order', () => {
+    const context = {
+      orientation: 'horizontal' as const,
+      selectionMode: 'multiple' as const,
+      rangeSelectionEnabled: true,
+      direction: 'rtl' as const,
+    }
+    const event = {
+      shiftKey: true,
+      ctrlKey: false,
+      metaKey: false,
+      altKey: false,
+    }
+
+    expect(mapListboxKeyboardIntent({key: 'ArrowLeft', ...event}, context)).toBe('RANGE_NEXT')
+    expect(mapListboxKeyboardIntent({key: 'ArrowRight', ...event}, context)).toBe('RANGE_PREV')
+  })
+
   it('maps Shift+ArrowDown to RANGE_NEXT when range selection is enabled', () => {
     const intent = mapListboxKeyboardIntent(
       {

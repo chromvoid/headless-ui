@@ -74,6 +74,31 @@ describe('createTreegrid', () => {
     expect(treegrid.state.activeCellId()).toEqual({rowId: 'r1', colId: 'c3'})
   })
 
+  it('logicalizes hierarchy keys at runtime while keeping cell movement physical', () => {
+    let direction: 'ltr' | 'rtl' = 'ltr'
+    const treegrid = createTreegrid({
+      idBase: 'tg-direction',
+      rows,
+      columns,
+      initialActiveCellId: {rowId: 'r1', colId: 'c2'},
+      getDirection: () => direction,
+    })
+
+    treegrid.actions.handleKeyDown({key: 'ArrowRight'})
+    expect(treegrid.state.expandedRowIds().has('r1')).toBe(true)
+
+    direction = 'rtl'
+    treegrid.actions.handleKeyDown({key: 'ArrowLeft'})
+    expect(treegrid.state.activeCellId()).toEqual({rowId: 'r1a', colId: 'c2'})
+
+    treegrid.actions.handleKeyDown({key: 'ArrowRight'})
+    expect(treegrid.state.activeCellId()).toEqual({rowId: 'r1', colId: 'c2'})
+
+    treegrid.contracts.getCellProps('r1a', 'c2').onFocus()
+    treegrid.actions.handleKeyDown({key: 'ArrowLeft'})
+    expect(treegrid.state.activeCellId()).toEqual({rowId: 'r1a', colId: 'c1'})
+  })
+
   it('moves active cell to collapsed ancestor when descendant is active', () => {
     const treegrid = createTreegrid({
       idBase: 'tg-collapse-invariant',

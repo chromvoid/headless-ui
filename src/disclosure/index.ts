@@ -1,11 +1,14 @@
 import {action, atom, type Atom} from '@reatom/core'
 
+import {resolveLogicalHierarchyArrow, type TextDirection} from '../core/direction'
+
 export interface CreateDisclosureOptions {
   idBase?: string
   isOpen?: boolean
   isDisabled?: boolean
   name?: string
   onOpenChange?: (isOpen: boolean) => void
+  getDirection?: () => TextDirection
 }
 
 export interface DisclosureState {
@@ -155,13 +158,15 @@ export function createDisclosure(options: CreateDisclosureOptions = {}): Disclos
       return
     }
 
-    if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
+    const hierarchyArrow = resolveLogicalHierarchyArrow(event.key, options.getDirection?.() ?? 'ltr')
+
+    if (event.key === 'ArrowDown' || hierarchyArrow === 'forward') {
       event.preventDefault?.()
       open()
       return
     }
 
-    if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
+    if (event.key === 'ArrowUp' || hierarchyArrow === 'backward') {
       event.preventDefault?.()
       close()
       return

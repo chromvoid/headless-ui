@@ -1,5 +1,7 @@
 import {action, atom, computed, type Atom, type Computed} from '@reatom/core'
 
+import {resolveLogicalHorizontalArrow, type TextDirection} from '../core/direction'
+
 export interface CarouselSlide {
   id: string
   label?: string
@@ -20,6 +22,7 @@ export interface CreateCarouselOptions {
   visibleSlides?: number
   initialActiveSlideIndex?: number
   initialPaused?: boolean
+  getDirection?: () => TextDirection
 }
 
 export interface CarouselState {
@@ -247,13 +250,19 @@ export function createCarousel(options: CreateCarouselOptions): CarouselModel {
   }, `${idBase}.handlePointerLeave`)
 
   const handleKeyDown = action((event: CarouselKeyboardEventLike) => {
+    const horizontalArrow = resolveLogicalHorizontalArrow(event.key, options.getDirection?.() ?? 'ltr')
+
+    if (horizontalArrow === 'next') {
+      moveNext()
+      return
+    }
+
+    if (horizontalArrow === 'previous') {
+      movePrev()
+      return
+    }
+
     switch (event.key) {
-      case 'ArrowRight':
-        moveNext()
-        return
-      case 'ArrowLeft':
-        movePrev()
-        return
       case 'Home':
         moveTo(0)
         return

@@ -1,5 +1,7 @@
 import {action, atom, computed, type Atom, type Computed} from '@reatom/core'
 
+import {resolveLogicalHorizontalArrow, type TextDirection} from '../core/direction'
+
 export type CompositeNavigationOrientation = 'horizontal' | 'vertical'
 export type CompositeFocusStrategy = 'roving-tabindex' | 'aria-activedescendant'
 export type CompositeWrapMode = 'wrap' | 'clamp'
@@ -20,6 +22,7 @@ export interface CompositeKeyboardEventLike {
 export interface CompositeKeyboardIntentContext {
   orientation: CompositeNavigationOrientation
   homeEndEnabled?: boolean
+  direction?: TextDirection
 }
 
 export type CompositeKeyboardIntent = 'NAV_NEXT' | 'NAV_PREV' | 'NAV_FIRST' | 'NAV_LAST'
@@ -31,6 +34,7 @@ export interface CreateCompositeNavigationOptions {
   focusStrategy?: CompositeFocusStrategy
   wrapMode?: CompositeWrapMode
   initialActiveId?: string | null
+  getDirection?: () => TextDirection
 }
 
 export interface CompositeNavigationState {
@@ -105,11 +109,14 @@ export const mapCompositeNavigationIntent = (
     return null
   }
 
-  const nextKey = context.orientation === 'horizontal' ? 'ArrowRight' : 'ArrowDown'
-  const prevKey = context.orientation === 'horizontal' ? 'ArrowLeft' : 'ArrowUp'
-
-  if (event.key === nextKey) return 'NAV_NEXT'
-  if (event.key === prevKey) return 'NAV_PREV'
+  if (context.orientation === 'horizontal') {
+    const horizontalArrow = resolveLogicalHorizontalArrow(event.key, context.direction ?? 'ltr')
+    if (horizontalArrow === 'next') return 'NAV_NEXT'
+    if (horizontalArrow === 'previous') return 'NAV_PREV'
+  } else {
+    if (event.key === 'ArrowDown') return 'NAV_NEXT'
+    if (event.key === 'ArrowUp') return 'NAV_PREV'
+  }
 
   if (context.homeEndEnabled !== false) {
     if (event.key === 'Home') return 'NAV_FIRST'
@@ -213,7 +220,10 @@ export function createCompositeNavigation(
   }, `${idBase}.moveLast`)
 
   const handleKeyDown = action((event: CompositeKeyboardEventLike) => {
-    const intent = mapCompositeNavigationIntent(event, {orientation})
+    const intent = mapCompositeNavigationIntent(event, {
+      orientation,
+      direction: options.getDirection?.() ?? 'ltr',
+    })
 
     switch (intent) {
       case 'NAV_NEXT':

@@ -453,4 +453,22 @@ describe('createToolbar', () => {
 
     expect(toolbar.state.orientation).toBe('horizontal')
   })
+
+  it('uses runtime direction for horizontal keys without consuming modified arrows', () => {
+    let direction: 'ltr' | 'rtl' = 'ltr'
+    const toolbar = createToolbar({
+      items: [{id: 'a'}, {id: 'b'}, {id: 'c'}],
+      getDirection: () => direction,
+    })
+
+    expect(toolbar.actions.handleKeyDown({key: 'ArrowRight'})).toBe(true)
+    expect(toolbar.state.activeId()).toBe('b')
+
+    direction = 'rtl'
+    expect(toolbar.actions.handleKeyDown({key: 'ArrowLeft'})).toBe(true)
+    expect(toolbar.state.activeId()).toBe('c')
+
+    expect(toolbar.actions.handleKeyDown({key: 'ArrowLeft', altKey: true})).toBe(false)
+    expect(toolbar.state.activeId()).toBe('c')
+  })
 })

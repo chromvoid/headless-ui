@@ -115,6 +115,31 @@ describe('createTabs', () => {
     expect(tabs.state.activeTabId()).toBe('a')
   })
 
+  it('uses the current reading direction for horizontal navigation', () => {
+    let direction: 'ltr' | 'rtl' = 'ltr'
+    const tabs = createTabs({
+      tabs: [{id: 'a'}, {id: 'b'}, {id: 'c'}],
+      getDirection: () => direction,
+    })
+    const key = (value: string) => ({
+      key: value,
+      shiftKey: false,
+      ctrlKey: false,
+      metaKey: false,
+      altKey: false,
+    })
+
+    tabs.actions.handleKeyDown(key('ArrowRight'))
+    expect(tabs.state.activeTabId()).toBe('b')
+
+    direction = 'rtl'
+    tabs.actions.handleKeyDown(key('ArrowLeft'))
+    expect(tabs.state.activeTabId()).toBe('c')
+
+    tabs.actions.handleKeyDown(key('ArrowRight'))
+    expect(tabs.state.activeTabId()).toBe('b')
+  })
+
   it('keeps active/selected in sync for automatic first/last movement', () => {
     const tabs = createTabs({
       tabs: [{id: 'a', disabled: true}, {id: 'b'}, {id: 'c'}],
