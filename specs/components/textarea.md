@@ -101,9 +101,9 @@ Note: role is not set explicitly. Native `<textarea>` semantics are used.
 ## Transitions Table
 
 | Event / Action      | Guard                                    | Effect                       | Next State        |
-| ------------------- | ---------------------------------------- | ---------------------------- | ----------------- | --- | --------- |
+| ------------------- | ---------------------------------------- | ---------------------------- | ----------------- |
 | `handleInput(v)`    | `!disabled && !readonly`                 | set value, call `onInput(v)` | `value = v`       |
-| `handleInput(v)`    | `disabled                                |                              | readonly`         | --  | no change |
+| `handleInput(v)`    | disabled or readonly                     | --                           | no change         |
 | `setValue(v)`       | --                                       | set value                    | `value = v`       |
 | `setDisabled(d)`    | --                                       | set disabled                 | `disabled = d`    |
 | `setReadonly(r)`    | --                                       | set readonly                 | `readonly = r`    |
