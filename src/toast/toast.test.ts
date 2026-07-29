@@ -24,7 +24,7 @@ describe('createToast', () => {
 
     const id = toast.actions.push({message: 'Saved'})
     expect(toast.state.items()).toHaveLength(1)
-    expectRoleAndAria(toast.contracts.getRegionProps(), 'region', {'aria-live': 'polite'})
+    expect(toast.contracts.getRegionProps()).toEqual({id: 'toast-auto-region'})
 
     vi.advanceTimersByTime(100)
     expect(toast.state.items().some((item) => item.id === id)).toBe(false)
@@ -185,16 +185,6 @@ describe('createToast', () => {
     expect(toast.state.items()).toHaveLength(1)
   })
 
-  it('supports assertive ariaLive option in region props', () => {
-    const toast = createToast({idBase: 'toast-assertive', ariaLive: 'assertive', defaultDurationMs: 0})
-
-    const props = toast.contracts.getRegionProps()
-    expect(props['aria-live']).toBe('assertive')
-    expect(props['aria-atomic']).toBe('false')
-    expect(props.role).toBe('region')
-    expect(props.id).toBe('toast-assertive-region')
-  })
-
   it('schedules auto-dismiss for initialItems', () => {
     vi.useFakeTimers()
     const toast = createToast({
@@ -284,5 +274,35 @@ describe('createToast', () => {
     // The revealed toast's timer now runs.
     vi.advanceTimersByTime(100)
     expect(toast.state.items().some((item) => item.id === revealed)).toBe(false)
+  })
+
+  it('updates an item in place and restarts its visible timer', () => {
+    vi.useFakeTimers()
+    const toast = createToast({idBase: 'toast-update', defaultDurationMs: 100})
+    const id = toast.actions.push({message: 'Saving', level: 'loading', durationMs: 0})
+
+    vi.advanceTimersByTime(500)
+    expect(toast.state.items()).toHaveLength(1)
+
+    expect(
+      toast.actions.update(id, {
+        message: 'Saved',
+        level: 'success',
+        durationMs: 100,
+        progress: true,
+      }),
+    ).toBe(true)
+    expect(toast.state.items()[0]).toMatchObject({id, message: 'Saved', level: 'success'})
+
+    vi.advanceTimersByTime(99)
+    expect(toast.state.items()).toHaveLength(1)
+    vi.advanceTimersByTime(1)
+    expect(toast.state.items()).toHaveLength(0)
+  })
+
+  it('returns false when updating an unknown item', () => {
+    const toast = createToast({idBase: 'toast-update-missing', defaultDurationMs: 0})
+
+    expect(toast.actions.update('missing', {message: 'Missing'})).toBe(false)
   })
 })

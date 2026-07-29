@@ -5,6 +5,7 @@ export type ToastLevel = 'info' | 'success' | 'warning' | 'error' | 'loading'
 export interface ToastAction {
   label: string
   onClick?: () => void
+  dismissOnClick?: boolean
 }
 
 export interface ToastItem {
@@ -24,7 +25,6 @@ export interface CreateToastOptions {
   initialItems?: readonly ToastItem[]
   maxVisible?: number
   defaultDurationMs?: number
-  ariaLive?: 'polite' | 'assertive'
 }
 
 export interface ToastState {
@@ -36,6 +36,7 @@ export interface ToastState {
 
 export interface ToastActions {
   push(item: Omit<ToastItem, 'id'> & {id?: string}): string
+  update(id: string, item: Omit<ToastItem, 'id'>): boolean
   dismiss(id: string): void
   clear(): void
   pause(): void
@@ -46,9 +47,6 @@ export interface ToastActions {
 
 export interface ToastRegionProps {
   id: string
-  role: 'region'
-  'aria-live': 'polite' | 'assertive'
-  'aria-atomic': 'false'
 }
 
 export interface ToastItemProps {
@@ -80,7 +78,6 @@ export interface ToastModel {
 export function createToast(options: CreateToastOptions = {}): ToastModel {
   const idBase = options.idBase ?? 'toast'
   const defaultDurationMs = Math.max(options.defaultDurationMs ?? 5000, 0)
-  const ariaLive = options.ariaLive ?? 'polite'
 
   const itemsAtom = atom<ToastItem[]>([...(options.initialItems ?? [])], `${idBase}.items`)
   const isPausedAtom = atom<boolean>(false, `${idBase}.isPaused`)
@@ -182,6 +179,30 @@ export function createToast(options: CreateToastOptions = {}): ToastModel {
     return id
   }, `${idBase}.push`)
 
+  const update = action((id: string, item: Omit<ToastItem, 'id'>) => {
+    const index = itemsAtom().findIndex((existing) => existing.id === id)
+    if (index < 0) return false
+
+    clearTracking(id)
+    const replacement: ToastItem = {
+      id,
+      message: item.message,
+      title: item.title,
+      level: item.level ?? 'info',
+      durationMs: item.durationMs ?? defaultDurationMs,
+      closable: item.closable ?? true,
+      icon: item.icon,
+      progress: item.progress,
+      actions: item.actions,
+    }
+    itemsAtom.set(itemsAtom().map((existing, itemIndex) => (itemIndex === index ? replacement : existing)))
+
+    if (isVisible(id)) {
+      scheduleAutoDismiss(id, replacement.durationMs ?? defaultDurationMs)
+    }
+    return true
+  }, `${idBase}.update`)
+
   // Starts auto-dismiss timers for any currently-visible toast that has a duration
   // but no running/tracked timer yet (e.g. promoted from the overflow queue).
   scheduleNewlyVisible = () => {
@@ -238,6 +259,7 @@ export function createToast(options: CreateToastOptions = {}): ToastModel {
 
   const actions: ToastActions = {
     push,
+    update,
     dismiss,
     clear,
     pause,
@@ -249,9 +271,6 @@ export function createToast(options: CreateToastOptions = {}): ToastModel {
     getRegionProps() {
       return {
         id: `${idBase}-region`,
-        role: 'region',
-        'aria-live': ariaLive,
-        'aria-atomic': 'false',
       }
     },
     getToastProps(id: string) {

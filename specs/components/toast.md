@@ -18,6 +18,7 @@
   - `isPaused()` - pause state for timers
 - `actions`:
   - `push(item)` - enqueue toast and return generated id
+  - `update(id, item)` - replace one toast in place and restart its visible timer
   - `dismiss(id)`
   - `clear()`
   - `pause()`
@@ -29,13 +30,12 @@
 
 ## CreateToastOptions
 
-| Option              | Type                      | Default    | Description                                   |
-| ------------------- | ------------------------- | ---------- | --------------------------------------------- |
-| `idBase`            | `string`                  | `'toast'`  | Base id prefix for all generated ids          |
-| `initialItems`      | `readonly ToastItem[]`    | `[]`       | Pre-populated toast items                     |
-| `maxVisible`        | `number`                  | `3`        | Maximum number of toasts shown (clamped >= 1) |
-| `defaultDurationMs` | `number`                  | `5000`     | Default auto-dismiss duration (clamped >= 0)  |
-| `ariaLive`          | `'polite' \| 'assertive'` | `'polite'` | `aria-live` value for the region              |
+| Option              | Type                   | Default   | Description                                   |
+| ------------------- | ---------------------- | --------- | --------------------------------------------- |
+| `idBase`            | `string`               | `'toast'` | Base id prefix for all generated ids          |
+| `initialItems`      | `readonly ToastItem[]` | `[]`      | Pre-populated toast items                     |
+| `maxVisible`        | `number`               | `3`       | Maximum number of toasts shown (clamped >= 1) |
+| `defaultDurationMs` | `number`               | `5000`    | Default auto-dismiss duration (clamped >= 0)  |
 
 ## State Signal Surface
 
@@ -47,10 +47,7 @@
 
 ## APG and A11y Contract
 
-- region role: `region`
-- region attributes:
-  - `aria-live` (`polite` or `assertive`)
-  - `aria-atomic="false"`
+- the region is structural only and is not a live region
 - toast item role:
   - `status` for `info`/`success`
   - `alert` for `warning`/`error`
@@ -76,10 +73,7 @@
 
 ```ts
 {
-  id: string                          // '{idBase}-region'
-  role: 'region'
-  'aria-live': 'polite' | 'assertive' // from options.ariaLive
-  'aria-atomic': 'false'
+  id: string // '{idBase}-region'
 }
 ```
 
@@ -110,6 +104,7 @@
 | Event / Action             | Current State            | Next State / Effect                                                                    |
 | -------------------------- | ------------------------ | -------------------------------------------------------------------------------------- |
 | `push(item)`               | any                      | New toast prepended to `items`; auto-dismiss timer scheduled; returns generated id     |
+| `update(id, item)`         | toast exists             | Presentation replaced in place; old timer cleared and visible timer restarted          |
 | `push(item)` (paused)      | `isPaused = true`        | New toast prepended to `items`; remaining duration stored but no timer started         |
 | `dismiss(id)`              | toast exists in `items`  | Toast removed from `items`; timer and tracking data cleared                            |
 | `clear()`                  | any                      | All items removed; all timers and tracking data cleared                                |
@@ -148,6 +143,7 @@ UIKit adapters MUST bind to the headless model as follows:
 **Actions called (event handlers, never mutate state directly):**
 
 - `actions.push(item)` — enqueue a new toast notification
+- `actions.update(id, item)` — replace an existing notification without changing its id or queue order
 - `actions.dismiss(id)` — dismiss a specific toast
 - `actions.clear()` — dismiss all toasts
 - `actions.pause()` — pause auto-dismiss timers (e.g., on mouse enter region)
@@ -166,7 +162,7 @@ UIKit adapters MUST bind to the headless model as follows:
 - Icon slot rendering per severity level
 - Closable attribute controlling dismiss button visibility
 - Lifecycle events (`cv-dismiss`, etc.)
-- Mouse enter/leave region handlers that call `pause()`/`resume()`
+- Mouse and focus enter/leave region handlers that call `pause()`/`resume()`
 
 ## Minimum Test Matrix
 
@@ -175,7 +171,7 @@ UIKit adapters MUST bind to the headless model as follows:
 - pause/resume preserving remaining duration
 - max-visible slicing behavior
 - role mapping for different toast levels (`status` for info/success, `alert` for warning/error)
-- `getRegionProps` returns correct `aria-live` and `role`
+- `getRegionProps` returns only the structural region id
 - `getDismissButtonProps` onClick calls dismiss
 - `getToastProps` throws for unknown id
 - clear removes all items and tracking
